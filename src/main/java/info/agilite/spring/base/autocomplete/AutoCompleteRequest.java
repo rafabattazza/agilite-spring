@@ -2,6 +2,7 @@ package info.agilite.spring.base.autocomplete;
 
 import java.util.List;
 
+import info.agilite.utils.StringUtils;
 import lombok.AccessLevel;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -16,4 +17,8 @@ public class AutoCompleteRequest {
 	String query;
 	String defaultFilter;
 	
+	
+	public String getColumnId() {
+		return StringUtils.concat(getTable().toLowerCase(), "id");
+	}
 }

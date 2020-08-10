@@ -1,7 +1,9 @@
 package info.agilite.spring.base.autocomplete;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import javax.persistence.EntityManager;
@@ -27,7 +29,7 @@ public class AgiliteAutocompleteController {
 	
 	@SuppressWarnings("unchecked")
 	@PostMapping
-	public List<Object[]> autoComplete(@RequestBody AutoCompleteRequest request){
+	public List<Map<String, Object>> autoComplete(@RequestBody AutoCompleteRequest request){
 		String whereQuery = "";
 		if(!StringUtils.isNullOrEmpty(request.getQuery())) {
 			whereQuery  = StringUtils.concat(" AND LOWER(", createColumnToQuery(request), ") LIKE :query");
@@ -35,7 +37,7 @@ public class AgiliteAutocompleteController {
 		
 		Query<Object[]> q = em.unwrap(Session.class)
 			.createQuery(StringUtils.concat(
-					" SELECT ", request.getTable(), "id, ", request.getColumns().stream().collect(Collectors.joining(", ")),
+					" SELECT ", request.getColumnId(), ", ", request.getColumns().stream().collect(Collectors.joining(", ")),
 					" FROM ", StringUtils.capitalize(request.getTable()),
 					" WHERE 1 = 1 ", whereQuery,
 					(StringUtils.isNullOrEmpty(request.getDefaultFilter()) ? "" : " AND " + request.getDefaultFilter()),
@@ -46,7 +48,20 @@ public class AgiliteAutocompleteController {
 			q.setParameter("query", "%" + request.getQuery().toLowerCase() + "%");
 		}
 		
-		return q.getResultList();
+		return q.getResultList().stream()
+				.map(row -> mountResult(request, row))
+				.collect(Collectors.toList());
+	}
+	
+	private Map<String, Object> mountResult(AutoCompleteRequest request, Object[] row){
+		Map<String, Object> result = new HashMap<>();
+		result.put(request.getColumnId(), row[0]);
+		int i = 1;
+		for(String colName : request.getColumns()) {
+			result.put(colName, row[i]);
+			i++;
+		}
+		return result;
 	}
 	
 	private String createColumnToQuery(AutoCompleteRequest request) {
