@@ -1,10 +1,10 @@
 package info.agilite.spring.base.crud;
 
 import java.io.IOException;
+import java.util.Arrays;
 
 import javax.transaction.Transactional;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -15,6 +15,7 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import info.agilite.spring.base.RestMapping;
+import info.agilite.utils.Utils;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -35,11 +36,15 @@ public class AgiliteCrudController {
 		service.saveEntity(parsedEntity);
 	}
 	
-//	@PostMapping("/list/{entity}")
-//	public CrudResult list(@PathVariable("entity") String entityName, @RequestBody CrudListRequest request) {
-//		configRequestDefault(request);
-//		return service.list(entityName, request);
-//	}
+	@PostMapping("/list/{entity}")
+	public CrudListResponse list(@PathVariable("entity") String entityName, @RequestBody CrudListRequest request) {
+		System.out.println(request);
+		
+		return new CrudListResponse(
+				Arrays.asList(Utils.map("cd20nome", "Rafael da Silva", "ax01uf", "SP")),
+				new CrudListPagination("cd20nome", false, 1, 50, 800)
+			);
+	}
 //
 //
 //	@PostMapping("/edit/{entity}/{id}")
