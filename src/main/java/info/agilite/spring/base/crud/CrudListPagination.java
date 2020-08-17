@@ -14,7 +14,4 @@ public class CrudListPagination {
 	String sortBy;
 	boolean descending;
 	Integer page, rowsPerPage, rowsNumber;
-	
-	
-	
 }

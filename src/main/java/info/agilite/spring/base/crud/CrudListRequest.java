@@ -11,9 +11,10 @@ import lombok.experimental.FieldDefaults;
 @NoArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class CrudListRequest {
-	Integer page;
+	Integer page, rowsPerPage;
+	String sortBy;
+	boolean desc;
 	List<String> columns;
-	
 	List<String> columnsSimpleFilter;
-	String silpleFilter;
+	String simpleFilterValue;
 }

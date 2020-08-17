@@ -1,12 +1,19 @@
 package info.agilite.spring.base.crud;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 import javax.persistence.EntityManager;
 
 import org.hibernate.Session;
+import org.hibernate.query.Query;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import info.agilite.utils.StringUtils;
+import info.agilite.utils.Utils;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -31,109 +38,144 @@ public class AgiliteCrudService {
 		return entityClass;
 	}
 	
+	public CrudListResponse list(String classe, CrudListRequest crudRequest) {
+		String alias = classe.toLowerCase();
+		
+		String sqlBase = createSQLBaseToList(classe, crudRequest, alias);
+		Long count = findCount(crudRequest, sqlBase);
+		
+		List<Map<String, Object>> data = findData(crudRequest, sqlBase, alias);
+		if(data.size() == 0 && crudRequest.getPage() > 0) {
+			crudRequest.setPage(0);
+			if(count > 0) {
+				//refazer com página 0
+				this.list(classe, crudRequest);
+			}
+		}
+		
+		return new CrudListResponse(data, new CrudListPagination(
+				crudRequest.getSortBy(), 
+				crudRequest.isDesc(), 
+				crudRequest.getPage(), 
+				crudRequest.getRowsPerPage(), 
+				count.intValue()
+			)
+		);
+	}
+
+	private String createSQLBaseToList(String classe, CrudListRequest crudRequest, String alias) {
+		StringBuilder result = new StringBuilder();
+		
+		result.append(" FROM ").append(classe).append(" ").append(alias);
+		result.append(createJoins(crudRequest, alias));
+
+		String where = createWhere(crudRequest, alias);
+		if(!StringUtils.isNullOrEmpty(where)) {
+			result.append(where);
+		}
+		
+		return result.toString();
+	}
 	
+	private String createWhere(CrudListRequest request, String alias) {
+		String simpleWhere = createSimpleFilter(request, alias);
+
+		if(StringUtils.isNullOrEmpty(simpleWhere)) {
+			return "";
+		}
+
+		return StringUtils.concat(" WHERE ", simpleWhere);
+	}
+
+	private String createSimpleFilter(CrudListRequest request, String alias) {
+		if(!StringUtils.isNullOrEmpty(request.getSimpleFilterValue())) {
+			List<String> filterFields = request.getColumnsSimpleFilter()
+					.stream()
+					.collect(Collectors.toList());
+
+			if(filterFields.size() > 0) {
+				StringBuilder where = new StringBuilder(" LOWER(CONCAT(");
+
+				String fields = filterFields.stream()
+						.map(field -> StringUtils.concat(" CAST(COALESCE(", alias, ".", field, ", '') AS string)"))
+						.collect(Collectors.joining(", "));
+
+				where.append(fields).append(")) LIKE :simple_fielter_value ");
+				return where.toString();
+			}
+		}
+		return "";
+	}
+
+	private Long findCount(CrudListRequest crudRequest, String baseSelect) {
+		Query<Long> queryCount = em.unwrap(Session.class).createQuery(StringUtils.concat(" SELECT count(*) AS qtd", baseSelect), Long.class);
+		setFilterParameters(crudRequest, queryCount);
+		Long qtdRegistros = queryCount.getSingleResult();
+		return qtdRegistros;
+	}
 	
-//	public CrudResult list(String classe, CrudListRequest crudRequest) {
-//		String alias = classe.toLowerCase();
-//		
-//		String sqlBase = createSQLBase(classe, crudRequest, alias);
-//		Long count = findCount(crudRequest, sqlBase);
-//		
-//		List<Map<String, Object>> data = findData(crudRequest, sqlBase, alias);
-//		
-//		String order = null;
-//		if(!Utils.isEmpty(crudRequest.getOrders())) {
-//			order = crudRequest.getOrders().get(0).getKey();
-//		}
-//		
-//		return new CrudResult(count, data, order);
-//	}
-//
-//	private String createSQLBase(String classe, CrudListRequest crudRequest, String alias) {
-//		StringBuilder result = new StringBuilder();
-//		
-//		result.append(" FROM ").append(classe).append(" ").append(alias);
-//		String joins = createJoins(crudRequest, alias);
-//		if(!StringUtils.isNullOrEmpty(joins)) {
-//			result.append(joins);
-//		}
-//		
-//		String where = createWhere(crudRequest, alias);
-//		if(!StringUtils.isNullOrEmpty(where)) {
-//			result.append(where);
-//		}
-//		
-//		return result.toString();
-//	}
-//
-//	private Long findCount(CrudListRequest crudRequest, String baseSelect) {
-//		TypedQuery<Long> queryCount = em.createQuery(StringUtils.concat(" SELECT count(*)", baseSelect), Long.class);
-//		setFilterParameters(crudRequest, queryCount);
-//		Long qtdRegistros = queryCount.getSingleResult();
-//		return qtdRegistros;
-//	}
-//	
-//	
-//	@SuppressWarnings("unchecked")
-//	private List<Map<String, Object>> findData(CrudListRequest crudRequest, String baseSelect, String alias){
-//		StringBuilder fields = new StringBuilder().append(crudRequest.getFieldsToSQL(alias));
-//		
-//		StringBuilder select = new StringBuilder(" SELECT ");
-//		select.append(fields);
-//		select.append(baseSelect);
-//		
-//		if(!Utils.isEmpty(crudRequest.getOrders())) {
-//			select.append(" ORDER BY ").append(alias).append(".").append(crudRequest.getOrders().stream().map(CrudOrderBy::getSqlOrder).collect(Collectors.joining(", ")));
-//		}
-//		Query query = em.createQuery(select.toString());
-//		setFilterParameters(crudRequest, query);
-//		
-//		if(crudRequest.getPageNumber() == null)crudRequest.setPageNumber(0);
-//		if(crudRequest.getPageSize() == null)crudRequest.setPageSize(200);
-//		query.setMaxResults(crudRequest.getPageSize());
-//		query.setFirstResult(crudRequest.getPageNumber() * crudRequest.getPageSize());
-//		
-//		List<Object[]> values = query.getResultList();
-//		return Utils.convertJpaListTupleToNestedMap(crudRequest.getFieldsAsString(), values);
-//	}
-//
-//	private void setFilterParameters(CrudListRequest request, Query query) {
-//		if(Utils.isEmpty(request.getParameters()))return;
-//		for(CrudFilterParameter param : request.getParameters()) {
-//			query.setParameter(param.getName(), param.getValue());
-//		}
-//	}
-//	
-//	private String createJoins(CrudListRequest crudRequest, String alias) {
-//		if(Utils.isEmpty(crudRequest.getJoins()))return "";
-//		String joins = crudRequest.getJoins()
-//				.stream()
-//				.map(join -> StringUtils.concat(
-//						join.isLeft() ? " LEFT " : " INNER ", 
-//						" JOIN ", 
-//						alias, ".", join.getProperty(), 
-//						join.getAlias() != null ? " AS " + join.getAlias() : "",
-//						" "))
-//				.collect(Collectors.joining(" "));
-//		return joins;
-//	}
-//	
-//	private String createWhere(CrudListRequest request, String alias) {
-//		String simpleWhere = createSimpleFilter(request, alias);
-//		String where = createFilter(request, alias);
-//		
-//		if(StringUtils.isNullOrEmpty(simpleWhere) && StringUtils.isNullOrEmpty(where)) {
-//			return "";
-//		}
-//		
-//		if(!StringUtils.isNullOrEmpty(simpleWhere) && !StringUtils.isNullOrEmpty(where)) {
-//			return StringUtils.concat(" WHERE ", simpleWhere, " AND ", where);
-//		}
-//		
-//		
-//		return StringUtils.concat(" WHERE ", simpleWhere, where);
-//	}
-//
+	private void setFilterParameters(CrudListRequest request, Query query) {
+		if(StringUtils.isNullOrEmpty(request.getSimpleFilterValue()))return;
+		query.setParameter("simple_fielter_value", "%" + request.getSimpleFilterValue().toLowerCase() + "%");
+	}
+	
+	@SuppressWarnings("unchecked")
+	private List<Map<String, Object>> findData(CrudListRequest crudRequest, String baseSelect, String alias){
+		String fields = getFields(crudRequest, alias);
+		
+		StringBuilder select = new StringBuilder(" SELECT ");
+		select.append(fields);
+		select.append(baseSelect);
+		
+		if(!Utils.isEmpty(crudRequest.getSortBy())) {
+			select.append(" ORDER BY ").append(alias).append(".").append(crudRequest.getSortBy());
+			if(crudRequest.isDesc()) {
+				select.append(" DESC ");
+			}
+		}
+		Query query = em.unwrap(Session.class).createQuery(select.toString());
+		setFilterParameters(crudRequest, query);
+		
+		if(crudRequest.getPage() == null || crudRequest.getPage() == 0)crudRequest.setPage(1);
+		if(crudRequest.getRowsPerPage() == null)crudRequest.setRowsPerPage(50);
+		
+		query.setMaxResults(crudRequest.getRowsPerPage());
+		query.setFirstResult(crudRequest.getRowsPerPage() * (crudRequest.getPage()-1));
+		
+		List<Object[]> values = query.getResultList();
+		return Utils.convertJpaListTupleToNestedMap("id, " + crudRequest.getColumns().stream().collect(Collectors.joining(",")), values);
+	}
+	
+	private String getFields(CrudListRequest request, String alias) {
+		return StringUtils.concat(alias, ".",  alias, "id as id, ", request.getColumns().stream().map(column -> (alias + "." + column)).collect(Collectors.joining(",")));
+	}
+	
+	private String createJoins(CrudListRequest crudRequest, String alias) {
+		Set<String> fks = crudRequest.getColumns().stream()
+			.filter(col -> col.indexOf(".") > 0)
+			.map(col -> col.substring(0, col.indexOf(".")))
+			.collect(Collectors.toSet());
+		if(Utils.isEmpty(fks))return "";
+		
+		String joins = fks
+				.stream()
+				.map(join -> StringUtils.concat(
+						" LEFT JOIN ", 
+						alias, ".", join, 
+						" AS " + join,
+						" "))
+				.collect(Collectors.joining(" "));
+		return joins;
+	}
+	
+	public Object findEntityById(String entityName, Long idEntity) {
+		Query query = em.unwrap(Session.class).createQuery(" FROM " + entityName + " WHERE id = :id");
+		query.setParameter("id", idEntity);
+		
+		return query.uniqueResult();
+	}
+
+	
 //	private String createFilter(CrudListRequest request, String alias) {
 //		if(Utils.isEmpty(request.getFilters()))return "";
 //		
@@ -158,38 +200,6 @@ public class AgiliteCrudService {
 //		return where.toString();
 //	}
 //
-//	private String createSimpleFilter(CrudListRequest request, String alias) {
-//		if(!StringUtils.isNullOrEmpty(request.getQuery())) {
-//			List<String> filterFields = request.getFields()
-//					.stream()
-//					.filter(field -> field.isFilterable())
-//					.map(field -> field.getKey())
-//					.collect(Collectors.toList());
-//			
-//			if(filterFields.size() > 0) {
-//				StringBuilder where = new StringBuilder(" (");
-//				
-//				String fields = filterFields.stream()
-//					.map(field -> StringUtils.concat(" LOWER(CONCAT(", alias, ".", field, ", '')) like :simple_fielter_value "))
-//					.collect(Collectors.joining(" OR "));
-//				
-//				where.append(fields).append(") ");
-//				request.addToParameter(new CrudFilterParameter("simple_fielter_value", "%" + request.getQuery().toLowerCase() + "%"));
-//				
-//				return where.toString();
-//			}
-//		}
-//		return "";
-//	}
-//	public Map<String, Object> findEntityById(String entityName, Long idEntity) {
-//		String fields = createFieldsToEdit(entityName);
-//		
-//		Query query = em.createQuery("SELECT " + fields + " FROM " + entityName + " WHERE id = :id");
-//		query.setParameter("id", idEntity);
-//		
-//		Object[] result = (Object[])query.getSingleResult();
-//		return Utils.convertJpaTupleToNestedMap(fields, result);
-//	}
 //	
 //	private String createFieldsToEdit(String entityName)  {
 //		EntityMetadata entityMetadata = metadata.getEntityMetadata(entityName);
