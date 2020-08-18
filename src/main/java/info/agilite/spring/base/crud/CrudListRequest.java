@@ -15,6 +15,9 @@ public class CrudListRequest {
 	String sortBy;
 	boolean desc;
 	List<String> columns;
+	
 	List<String> columnsSimpleFilter;
 	String simpleFilterValue;
+	
+	String defaultFilter;
 }

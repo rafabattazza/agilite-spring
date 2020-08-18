@@ -79,12 +79,13 @@ public class AgiliteCrudService {
 	
 	private String createWhere(CrudListRequest request, String alias) {
 		String simpleWhere = createSimpleFilter(request, alias);
-
-		if(StringUtils.isNullOrEmpty(simpleWhere)) {
-			return "";
-		}
-
-		return StringUtils.concat(" WHERE ", simpleWhere);
+		String defaultWhere = request.getDefaultFilter();
+		
+		return StringUtils.concat(" WHERE ", 
+				StringUtils.firstNotEmpty(simpleWhere, " 1 = 1 "), 
+				" AND ",
+				StringUtils.firstNotEmpty(defaultWhere, " 1 = 1 ")
+			);
 	}
 
 	private String createSimpleFilter(CrudListRequest request, String alias) {
