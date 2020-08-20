@@ -12,6 +12,8 @@ import org.hibernate.query.Query;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import info.agilite.spring.base.metadata.EntitiesMetadata;
+import info.agilite.spring.base.metadata.PropertyMetadata;
 import info.agilite.utils.StringUtils;
 import info.agilite.utils.Utils;
 import lombok.AccessLevel;
@@ -69,7 +71,7 @@ public class AgiliteCrudService {
 		result.append(" FROM ").append(classe).append(" ").append(alias);
 		result.append(createJoins(crudRequest, alias));
 
-		String where = createWhere(crudRequest, alias);
+		String where = createWhere(classe, crudRequest, alias);
 		if(!StringUtils.isNullOrEmpty(where)) {
 			result.append(where);
 		}
@@ -77,14 +79,17 @@ public class AgiliteCrudService {
 		return result.toString();
 	}
 	
-	private String createWhere(CrudListRequest request, String alias) {
+	private String createWhere(String classe, CrudListRequest request, String alias) {
 		String simpleWhere = createSimpleFilter(request, alias);
 		String defaultWhere = request.getDefaultFilter();
+		String inactiveWhere = createArchiveWhere(classe, request, alias);
 		
 		return StringUtils.concat(" WHERE ", 
 				StringUtils.firstNotEmpty(simpleWhere, " 1 = 1 "), 
 				" AND ",
-				StringUtils.firstNotEmpty(defaultWhere, " 1 = 1 ")
+				StringUtils.firstNotEmpty(defaultWhere, " 1 = 1 "),
+				" AND ",
+				StringUtils.firstNotEmpty(inactiveWhere, " 1 = 1 ")
 			);
 	}
 
@@ -105,7 +110,19 @@ public class AgiliteCrudService {
 				return where.toString();
 			}
 		}
-		return "";
+		return null;
+	}
+	
+	private String createArchiveWhere(String classe, CrudListRequest request, String alias) {
+		PropertyMetadata propertyExcluido = EntitiesMetadata.INSTANCE.getPropertyByName(StringUtils.concat(classe, "arquivado"));
+		if(propertyExcluido != null) {
+			if(request.getCompleteFilters() != null && request.getCompleteFilters().isShowArchivedOnly()) {
+				return StringUtils.concat(propertyExcluido.getNome(), " = 1");
+			}else {
+				return StringUtils.concat(" (", propertyExcluido.getNome(), " IS NULL) ");
+			}
+		}
+		return null;
 	}
 
 	private Long findCount(CrudListRequest crudRequest, String baseSelect) {
@@ -176,6 +193,28 @@ public class AgiliteCrudService {
 		return query.uniqueResult();
 	}
 
+	public void archive(String entityName, List<Long> ids) {
+		em.unwrap(Session.class).createQuery("UPDATE " + entityName + " SET " + entityName + "arquivado = :arquivado WHERE " + entityName +"id IN (:ids)")
+		  .setParameter("arquivado", 1)
+		  .setParameter("ids", ids)
+		  .executeUpdate();
+	}
+	
+	public void unarchive(String entityName, List<Long> ids) {
+		em.unwrap(Session.class).createQuery("UPDATE " + entityName + " SET " + entityName + "arquivado = null WHERE " + entityName +"id IN (:ids)")
+		  .setParameter("ids", ids)
+		  .executeUpdate();
+	}
+	
+	public void delete(String entityName, Long id) {
+		try {
+			Session s = em.unwrap(Session.class);
+			Object entity = s.get(getEntityClass(entityName), id);
+			s.delete(entity);
+		} catch (ClassNotFoundException e) {
+			throw new RuntimeException("Erro ao excluir entidade", e);
+		}
+	}
 	
 //	private String createFilter(CrudListRequest request, String alias) {
 //		if(Utils.isEmpty(request.getFilters()))return "";
@@ -218,9 +257,5 @@ public class AgiliteCrudService {
 //	}
 //	
 //	
-//	public void delete(String entityName, Long id) {
-//		em.createQuery("DELETE FROM " + entityName + " WHERE id = :id")
-//		  .setParameter("id", id)
-//		  .executeUpdate();
-//	}
+
 }

@@ -1,15 +1,18 @@
 package info.agilite.spring.base.crud;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Objects;
 
 import javax.management.IntrospectionException;
 import javax.transaction.Transactional;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
@@ -46,22 +49,30 @@ public class AgiliteCrudController {
 	public Object edit(@PathVariable("entity") String entityName, @PathVariable("id") Long idEntity) throws ClassNotFoundException, IntrospectionException {
 		Objects.requireNonNull(idEntity, "Entity id can't be null");
 		
-		return service.findEntityById(entityName, idEntity);
+		Object result = service.findEntityById(entityName, idEntity);
+		if(result == null) {
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+		}
+
+		return result;
 	}
 	
-
-//	
-//	@DeleteMapping("/{entity}/{id}")
-//	@Transactional
-//	public void delete(@PathVariable("entity") String entityName, @PathVariable("id") Long id) {
-//		service.delete(entityName, id);
-//	}
-//	
-//	private CrudListRequest configRequestDefault(CrudListRequest request) {
-//		if(Utils.isEmpty(request.getOrders())) {
-//			request.setOrders(Arrays.asList(new CrudOrderBy(request.getFields().get(0).getKey(), false)));
-//		}
-//		
-//		return request;
-//	}
+	@PostMapping("/archive/{entity}")
+	@Transactional
+	public void archive(@PathVariable("entity") String entityName, @RequestBody List<Long> ids) {
+		service.archive(entityName, ids);
+	}
+	
+	@PostMapping("/delete/{entity}")
+	@Transactional
+	public void delete(@PathVariable("entity") String entityName, @RequestBody Long id) {
+		service.delete(entityName, id);
+	}
+	
+	@PostMapping("/unarchive/{entity}")
+	@Transactional
+	public void unarchive(@PathVariable("entity") String entityName, @RequestBody List<Long> ids) {
+		service.unarchive(entityName, ids);
+	}
+	
 }

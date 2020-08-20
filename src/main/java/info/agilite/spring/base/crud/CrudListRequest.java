@@ -20,4 +20,6 @@ public class CrudListRequest {
 	String simpleFilterValue;
 	
 	String defaultFilter;
+	
+	CrudListCompleteFilter completeFilters;
 }
