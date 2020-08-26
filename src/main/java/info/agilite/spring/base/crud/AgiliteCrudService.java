@@ -30,9 +30,11 @@ public class AgiliteCrudService {
 	private String entityBasePackage;
 
 	//TODO validar o delete do Ax01 no CD01020
-	public void saveEntity(Object entity) {
+	public Object saveEntity(Object entity) {
 		Session session = em.unwrap(Session.class);
 	    session.saveOrUpdate(entity);
+	    
+	    return entity;
 	}
 	
 	public Class<?> getEntityClass(String entityName) throws ClassNotFoundException {
@@ -128,7 +130,7 @@ public class AgiliteCrudService {
 	private Long findCount(CrudListRequest crudRequest, String baseSelect) {
 		Query<Long> queryCount = em.unwrap(Session.class).createQuery(StringUtils.concat(" SELECT count(*) AS qtd", baseSelect), Long.class);
 		setFilterParameters(crudRequest, queryCount);
-		Long qtdRegistros = queryCount.getSingleResult();
+		Long qtdRegistros = queryCount.uniqueResult();
 		return qtdRegistros;
 	}
 	
@@ -160,7 +162,7 @@ public class AgiliteCrudService {
 		query.setMaxResults(crudRequest.getRowsPerPage());
 		query.setFirstResult(crudRequest.getRowsPerPage() * (crudRequest.getPage()-1));
 		
-		List<Object[]> values = query.getResultList();
+		List<Object[]> values = query.list();
 		return Utils.convertJpaListTupleToNestedMap("id, " + crudRequest.getColumns().stream().collect(Collectors.joining(",")), values);
 	}
 	

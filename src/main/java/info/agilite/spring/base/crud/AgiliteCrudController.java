@@ -32,11 +32,11 @@ public class AgiliteCrudController {
 	
 	@PostMapping("/save/{entity}")
 	@Transactional
-	public void save(@PathVariable("entity") String entityName, @RequestBody String entity) throws ClassNotFoundException, JsonParseException, JsonMappingException, IOException {
+	public Object save(@PathVariable("entity") String entityName, @RequestBody String entity) throws ClassNotFoundException, JsonParseException, JsonMappingException, IOException {
 		ObjectMapper mapper = jsonBuilder.build();
 		Object parsedEntity = mapper.readValue(entity.getBytes(), service.getEntityClass(entityName));
 		
-		service.saveEntity(parsedEntity);
+		return service.saveEntity(parsedEntity);
 	}
 	
 	@PostMapping("/list/{entity}")

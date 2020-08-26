@@ -48,7 +48,7 @@ public class AgiliteAutocompleteController {
 			q.setParameter("query", "%" + request.getQuery().toLowerCase() + "%");
 		}
 		
-		return q.getResultList().stream()
+		return q.list().stream()
 				.map(row -> mountResult(request, row))
 				.collect(Collectors.toList());
 	}
