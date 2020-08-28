@@ -1,5 +1,6 @@
 package info.agilite.spring.base.database;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -7,6 +8,7 @@ import java.util.stream.Collectors;
 import javax.persistence.EntityManager;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.JoinType;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 
@@ -52,4 +54,18 @@ public class GenericRepository {
 		
 		return s.createQuery(criteriaQuery).uniqueResult();
 	}
+	
+	public <T> T getFetch(Class<T> clazz, Long id, Join ... joins) {
+		Session s = em.unwrap(Session.class);
+		CriteriaBuilder criteriaBuilder = s.getCriteriaBuilder();
+		CriteriaQuery<T> criteriaQuery = criteriaBuilder.createQuery(clazz);
+
+		Root<T> root = criteriaQuery.from(clazz);
+		Arrays.asList(joins).forEach(join -> root.fetch(join.getName(), join.isLeft() ? JoinType.LEFT : JoinType.INNER));
+		
+		criteriaQuery.where(criteriaBuilder.equal(root.get(clazz.getSimpleName().toLowerCase()+"id"), id));
+		
+		return s.createQuery(criteriaQuery).uniqueResult();
+	}
+
 }
