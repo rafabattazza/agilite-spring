@@ -35,6 +35,19 @@ public class GenericRepository {
 	 */
 	public <T> T getByEquals(Class<T> clazz, Object ... values) {
 		Session s = em.unwrap(Session.class);
+		CriteriaQuery<T> criteriaQuery = createCriteria(clazz, s, values);
+		
+		return s.createQuery(criteriaQuery).uniqueResult();
+	}
+	
+	public <T> List<T> findByEquals(Class<T> clazz, Object ... values) {
+		Session s = em.unwrap(Session.class);
+		CriteriaQuery<T> criteriaQuery = createCriteria(clazz, s, values);
+		
+		return s.createQuery(criteriaQuery).list();
+	}
+
+	private <T> CriteriaQuery<T> createCriteria(Class<T> clazz, Session s, Object... values) {
 		CriteriaBuilder criteriaBuilder = s.getCriteriaBuilder();
 		CriteriaQuery<T> criteriaQuery = criteriaBuilder.createQuery(clazz);
 		Root<T> root = criteriaQuery.from(clazz);
@@ -51,9 +64,9 @@ public class GenericRepository {
 		}).collect(Collectors.toList());
 		Predicate and = criteriaBuilder.and(restrictions.toArray(new Predicate[0]));
 		criteriaQuery.where(and);
-		
-		return s.createQuery(criteriaQuery).uniqueResult();
+		return criteriaQuery;
 	}
+	
 	
 	public <T> T getFetch(Class<T> clazz, Long id, Join ... joins) {
 		Session s = em.unwrap(Session.class);
