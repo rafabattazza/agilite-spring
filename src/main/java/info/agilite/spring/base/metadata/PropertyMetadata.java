@@ -14,6 +14,7 @@ import lombok.experimental.FieldDefaults;
 @Setter
 public class PropertyMetadata {
 	final String nome;
+	final String table;
 	final Type type;
 	final String size;
 	final boolean required;

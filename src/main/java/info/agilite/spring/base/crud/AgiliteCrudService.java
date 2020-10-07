@@ -189,7 +189,14 @@ public class AgiliteCrudService {
 	}
 	
 	public Object findEntityById(String entityName, Long idEntity) {
-		Query query = em.unwrap(Session.class).createQuery(" FROM " + entityName + " WHERE id = :id");
+		String alias = entityName.toLowerCase();
+		@SuppressWarnings("rawtypes")
+		Query query = em.unwrap(Session.class).createQuery(StringUtils.concat(
+				createFromWithFetch(entityName, alias), 
+				" WHERE ",
+				alias, 
+				".id = :id")
+			);
 		query.setParameter("id", idEntity);
 		
 		return query.uniqueResult();
@@ -218,46 +225,18 @@ public class AgiliteCrudService {
 		}
 	}
 	
-//	private String createFilter(CrudListRequest request, String alias) {
-//		if(Utils.isEmpty(request.getFilters()))return "";
-//		
-//		StringBuilder where = new StringBuilder();
-//		int indexParametro = 0;
-//		for(CrudFilter filter : request.getFilters()) {
-//			if(where.length() > 0) {
-//				where.append(" AND ");
-//			}
-//		
-//			where.append(filter.getSqlField(alias)).append(" ");
-//			where.append(filter.getOper().getSqlOperation()).append(" ");
-//			where.append(filter.getSqlParams(indexParametro)).append(" ");
-//			
-//			Object[] convertedParams = filter.convertValues();
-//			for(Object paramValue : convertedParams) {
-//				request.addToParameter(new CrudFilterParameter(CrudFilter.PARAM_PREFIX + indexParametro, paramValue));
-//				indexParametro++;
-//			}
-//		}
-//
-//		return where.toString();
-//	}
-//
-//	
-//	private String createFieldsToEdit(String entityName)  {
-//		EntityMetadata entityMetadata = metadata.getEntityMetadata(entityName);
-//		
-//		return entityMetadata.getProperties()
-//			.stream()
-//			.map(prop -> {
-//				if (prop.isFk()) {
-//					return prop.getNome() + ".id";
-//				}else {
-//					return prop.getNome();
-//				}
-//			})
-//			.collect(Collectors.joining(", "));
-//	}
-//	
-//	
+	private String createFromWithFetch(String entityName, String alias){
+		String result = StringUtils.concat(" FROM ",  entityName, " ", alias);
+		
+		List<PropertyMetadata> properties = EntitiesMetadata.INSTANCE.getPropertiesByTable(entityName);
+		List<PropertyMetadata> fks = properties.stream().filter(entity -> entity.isFk()).collect(Collectors.toList());
+		if(!Utils.isEmpty(fks)){
+			for(PropertyMetadata fk : fks){
+				result = StringUtils.concat(result, (fk.isRequired() ? " INNER " : " LEFT "), " JOIN FETCH ", alias, ".", fk.getNome());
+			};
+		}
+		
+		return result;
+	}
 
 }
