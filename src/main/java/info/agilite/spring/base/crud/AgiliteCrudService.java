@@ -105,7 +105,7 @@ public class AgiliteCrudService {
 				StringBuilder where = new StringBuilder(" LOWER(CONCAT(");
 
 				String fields = filterFields.stream()
-						.map(field -> StringUtils.concat(" CAST(COALESCE(", alias, ".", field, ", '') AS string)"))
+						.map(field -> StringUtils.concat(" COALESCE(CAST(", alias, ".", field, " AS string), '') "))
 						.collect(Collectors.joining(", "));
 
 				where.append(fields).append(")) LIKE :simple_fielter_value ");
