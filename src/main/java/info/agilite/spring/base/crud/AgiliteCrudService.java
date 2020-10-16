@@ -85,13 +85,16 @@ public class AgiliteCrudService {
 		String simpleWhere = createSimpleFilter(request, alias);
 		String defaultWhere = request.getDefaultFilter();
 		String inactiveWhere = createArchiveWhere(classe, request, alias);
+		String completeWhere = createCompleteWhere(request, alias);
 		
 		return StringUtils.concat(" WHERE ", 
 				StringUtils.firstNotEmpty(simpleWhere, " 1 = 1 "), 
 				" AND ",
 				StringUtils.firstNotEmpty(defaultWhere, " 1 = 1 "),
 				" AND ",
-				StringUtils.firstNotEmpty(inactiveWhere, " 1 = 1 ")
+				StringUtils.firstNotEmpty(inactiveWhere, " 1 = 1 "),
+				" AND ",
+				StringUtils.firstNotEmpty(completeWhere, " 1 = 1 ")
 			);
 	}
 
@@ -110,6 +113,21 @@ public class AgiliteCrudService {
 
 				where.append(fields).append(")) LIKE :simple_fielter_value ");
 				return where.toString();
+			}
+		}
+		return null;
+	}
+	
+	private String createCompleteWhere(CrudListRequest request, String alias) {
+		if(request.getCompleteFilters() != null && !Utils.isEmpty(request.getCompleteFilters().getValues())) {
+			List<CrudListCompleteFilterValue> filterFields = request.getCompleteFilters().getValues()
+					.stream()
+					.collect(Collectors.toList());
+
+			if(filterFields.size() > 0) {
+				return filterFields.stream()
+						.map(field -> StringUtils.concat(" LOWER(COALESCE(CAST(", alias, ".", field.getName(), " AS string), '')) LIKE :", field.getName().replace(".", "_")))
+						.collect(Collectors.joining(" AND "));
 			}
 		}
 		return null;
@@ -135,8 +153,13 @@ public class AgiliteCrudService {
 	}
 	
 	private void setFilterParameters(CrudListRequest request, Query query) {
-		if(StringUtils.isNullOrEmpty(request.getSimpleFilterValue()))return;
-		query.setParameter("simple_fielter_value", "%" + request.getSimpleFilterValue().toLowerCase() + "%");
+		if(!StringUtils.isNullOrEmpty(request.getSimpleFilterValue())){
+			query.setParameter("simple_fielter_value", "%" + request.getSimpleFilterValue().toLowerCase() + "%");
+		}
+		
+		if(request.getCompleteFilters() != null && !Utils.isEmpty(request.getCompleteFilters().getValues())){
+			request.getCompleteFilters().getValues().forEach(value -> query.setParameter(value.getName(), "%" + value.getValue() + "%"));
+		}
 	}
 	
 	@SuppressWarnings("unchecked")
