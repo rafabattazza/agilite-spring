@@ -186,16 +186,23 @@ public class AgiliteCrudService {
 		query.setFirstResult(crudRequest.getRowsPerPage() * (crudRequest.getPage()-1));
 		
 		List<Object[]> values = query.list();
-		return Utils.convertJpaListTupleToNestedMap("id, " + crudRequest.getColumns().stream().collect(Collectors.joining(",")), values);
+		return Utils.convertJpaListTupleToNestedMap("id$|$" + crudRequest.getColumns().stream().collect(Collectors.joining("$|$")), "$|$", values);
 	}
 	
 	private String getFields(CrudListRequest request, String alias) {
-		return StringUtils.concat(alias, ".",  alias, "id as id, ", request.getColumns().stream().map(column -> (alias + "." + column)).collect(Collectors.joining(",")));
+		return StringUtils.concat(alias, ".",  alias, "id as id, ", request.getColumns().stream().map(column -> {
+			if(column.startsWith("NATIVE$")) {
+				return column.replace("NATIVE$", "");
+			}else{
+				return alias + "." + column;
+			}
+		}).collect(Collectors.joining(",")));
 	}
 	
 	private String createJoins(CrudListRequest crudRequest, String alias) {
 		Set<String> fks = crudRequest.getColumns().stream()
 			.filter(col -> col.indexOf(".") > 0)
+			.filter(col -> !col.startsWith("NATIVE$"))
 			.map(col -> col.substring(0, col.indexOf(".")))
 			.collect(Collectors.toSet());
 		if(Utils.isEmpty(fks))return "";
