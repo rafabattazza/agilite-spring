@@ -12,5 +12,6 @@ import info.agilite.spring.hibernate.types.JsonBinaryType;
 @MappedSuperclass
 public abstract class AgiliteAbstractEntity implements Serializable{
 	private static final long serialVersionUID = 1L;
+	public abstract Long getIdValue();
 
 }

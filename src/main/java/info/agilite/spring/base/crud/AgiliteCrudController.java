@@ -36,7 +36,8 @@ public class AgiliteCrudController {
 		ObjectMapper mapper = jsonBuilder.build();
 		Object parsedEntity = mapper.readValue(entity.getBytes(), service.getEntityClass(entityName));
 		
-		return service.saveEntity(parsedEntity);
+		service.saveEntity(parsedEntity);
+		return parsedEntity;
 	}
 	
 	@PostMapping("/list/{entity}")

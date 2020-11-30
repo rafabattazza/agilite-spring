@@ -5,14 +5,13 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import javax.persistence.EntityManager;
-
-import org.hibernate.Session;
 import org.hibernate.query.Query;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import info.agilite.spring.base.database.HibernateWrapper;
 import info.agilite.spring.base.metadata.EntitiesMetadata;
+import info.agilite.spring.base.metadata.OneToManyMetadata;
 import info.agilite.spring.base.metadata.PropertyMetadata;
 import info.agilite.utils.StringUtils;
 import info.agilite.utils.Utils;
@@ -24,17 +23,14 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level=AccessLevel.PRIVATE)
 @RequiredArgsConstructor
 public class AgiliteCrudService {
-	final EntityManager em;
+	final HibernateWrapper hibernate;
 
 	@Value("${info.agilite.spring.entity.base-package}")
 	private String entityBasePackage;
 
 	//TODO validar o delete do Ax01 no CD01020
-	public Object saveEntity(Object entity) {
-		Session session = em.unwrap(Session.class);
-	    session.saveOrUpdate(entity);
-	    
-	    return entity;
+	public void saveEntity(Object entity) {
+		hibernate.saveOrUpdateCascade(entity);
 	}
 	
 	public Class<?> getEntityClass(String entityName) throws ClassNotFoundException {
@@ -71,7 +67,7 @@ public class AgiliteCrudService {
 		StringBuilder result = new StringBuilder();
 		
 		result.append(" FROM ").append(classe).append(" ").append(alias);
-		result.append(createJoins(crudRequest, alias));
+		result.append(createListJoin(crudRequest, alias));
 
 		String where = createWhere(classe, crudRequest, alias);
 		if(!StringUtils.isNullOrEmpty(where)) {
@@ -146,7 +142,7 @@ public class AgiliteCrudService {
 	}
 
 	private Long findCount(CrudListRequest crudRequest, String baseSelect) {
-		Query<Long> queryCount = em.unwrap(Session.class).createQuery(StringUtils.concat(" SELECT count(*) AS qtd", baseSelect), Long.class);
+		Query<Long> queryCount = hibernate.query(StringUtils.concat(" SELECT count(*) AS qtd", baseSelect), Long.class);
 		setFilterParameters(crudRequest, queryCount);
 		Long qtdRegistros = queryCount.uniqueResult();
 		return qtdRegistros;
@@ -176,7 +172,7 @@ public class AgiliteCrudService {
 				select.append(" DESC ");
 			}
 		}
-		Query query = em.unwrap(Session.class).createQuery(select.toString());
+		Query query = hibernate.query(select.toString());
 		setFilterParameters(crudRequest, query);
 		
 		if(crudRequest.getPage() == null || crudRequest.getPage() == 0)crudRequest.setPage(1);
@@ -199,7 +195,7 @@ public class AgiliteCrudService {
 		}).collect(Collectors.joining(",")));
 	}
 	
-	private String createJoins(CrudListRequest crudRequest, String alias) {
+	private String createListJoin(CrudListRequest crudRequest, String alias) {
 		Set<String> fks = crudRequest.getColumns().stream()
 			.filter(col -> col.indexOf(".") > 0)
 			.filter(col -> !col.startsWith("NATIVE$"))
@@ -221,7 +217,7 @@ public class AgiliteCrudService {
 	public Object findEntityById(String entityName, Long idEntity) {
 		String alias = entityName.toLowerCase();
 		@SuppressWarnings("rawtypes")
-		Query query = em.unwrap(Session.class).createQuery(StringUtils.concat(
+		Query query = hibernate.query(StringUtils.concat(
 				createFromWithFetch(entityName, alias), 
 				" WHERE ",
 				alias, 
@@ -233,23 +229,21 @@ public class AgiliteCrudService {
 	}
 
 	public void archive(String entityName, List<Long> ids) {
-		em.unwrap(Session.class).createQuery("UPDATE " + entityName + " SET " + entityName + "arquivado = :arquivado WHERE " + entityName +"id IN (:ids)")
+		hibernate.query("UPDATE " + entityName + " SET " + entityName + "arquivado = :arquivado WHERE " + entityName +"id IN (:ids)")
 		  .setParameter("arquivado", 1)
 		  .setParameter("ids", ids)
 		  .executeUpdate();
 	}
 	
 	public void unarchive(String entityName, List<Long> ids) {
-		em.unwrap(Session.class).createQuery("UPDATE " + entityName + " SET " + entityName + "arquivado = null WHERE " + entityName +"id IN (:ids)")
+		hibernate.query("UPDATE " + entityName + " SET " + entityName + "arquivado = null WHERE " + entityName +"id IN (:ids)")
 		  .setParameter("ids", ids)
 		  .executeUpdate();
 	}
 	
 	public void delete(String entityName, Long id) {
 		try {
-			Session s = em.unwrap(Session.class);
-			Object entity = s.get(getEntityClass(entityName), id);
-			s.delete(entity);
+			hibernate.delete(getEntityClass(entityName), id);
 		} catch (ClassNotFoundException e) {
 			throw new RuntimeException("Erro ao excluir entidade", e);
 		}
@@ -264,6 +258,12 @@ public class AgiliteCrudService {
 			for(PropertyMetadata fk : fks){
 				result = StringUtils.concat(result, (fk.isRequired() ? " INNER " : " LEFT "), " JOIN FETCH ", alias, ".", fk.getNome());
 			};
+		}
+		List<OneToManyMetadata> ones = EntitiesMetadata.INSTANCE.getOneToManysByTable(entityName);
+		if(!Utils.isEmpty(ones)){
+			for(OneToManyMetadata one : ones){
+				result = StringUtils.concat(result, " LEFT JOIN FETCH ", alias, ".", one.getNome(),  " as ", one.getNome());
+			}
 		}
 		
 		return result;

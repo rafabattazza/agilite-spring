@@ -8,6 +8,7 @@ public abstract class EntitiesMetadata {
 	public static EntitiesMetadata INSTANCE;
 
 	protected abstract  Map<String, PropertyMetadata> getAttributesMetadata();
+	protected abstract  Map<String, List<OneToManyMetadata>> getOneToManys();
 	
 	public PropertyMetadata getPropertyByName(String name) {
 		return getAttributesMetadata().get(name.toLowerCase());
@@ -27,6 +28,10 @@ public abstract class EntitiesMetadata {
 		}
 		
 		return properties;
+	}
+	public List<OneToManyMetadata> getOneToManysByTable(String tableName){
+		tableName = tableName.toLowerCase();
+		return getOneToManys().get(tableName);
 	}
 }
 
