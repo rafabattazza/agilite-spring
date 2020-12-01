@@ -30,7 +30,7 @@ public class AgiliteCrudService {
 
 	//TODO validar o delete do Ax01 no CD01020
 	public void saveEntity(Object entity) {
-		hibernate.saveOrUpdateCascade(entity);
+		hibernate.persistForceRemoveChildren(entity);
 	}
 	
 	public Class<?> getEntityClass(String entityName) throws ClassNotFoundException {

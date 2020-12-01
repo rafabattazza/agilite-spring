@@ -27,15 +27,15 @@ import lombok.experimental.FieldDefaults;
 public class HibernateWrapper {
 	EntityManager em;
 	
-	public void saveOrUpdate(Object entity){
+	public void persist(Object entity){
 		em.unwrap(Session.class).saveOrUpdate(entity);
 	}
 	
-	public void saveOrUpdateCascade(Object entity){
-		this.saveOrUpdateCascade(entity, (child) -> true);
+	public void persistForceRemoveChildren(Object entity){
+		this.persistForceRemoveChildren(entity, (child) -> true);
 	}
 	
-	public void saveOrUpdateCascade(Object entity, Predicate<String> deleteChildren){
+	public void persistForceRemoveChildren(Object entity, Predicate<String> deleteChildren){
 		Session s = em.unwrap(Session.class);
 		
 		if(((AgiliteAbstractEntity)entity).getIdValue() != null){
