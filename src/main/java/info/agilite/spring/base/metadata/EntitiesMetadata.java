@@ -9,6 +9,7 @@ public abstract class EntitiesMetadata {
 
 	protected abstract  Map<String, PropertyMetadata> getAttributesMetadata();
 	protected abstract  Map<String, List<OneToManyMetadata>> getOneToManys();
+	public abstract String getTableToFiles(); 
 	
 	public PropertyMetadata getPropertyByName(String name) {
 		return getAttributesMetadata().get(name.toLowerCase());

@@ -1,5 +1,6 @@
 package info.agilite.spring.base.crud;
 
+import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -9,6 +10,7 @@ import org.hibernate.query.Query;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import info.agilite.spring.base.AgiliteAbstractEntity;
 import info.agilite.spring.base.database.HibernateWrapper;
 import info.agilite.spring.base.metadata.EntitiesMetadata;
 import info.agilite.spring.base.metadata.OneToManyMetadata;
@@ -31,6 +33,8 @@ public class AgiliteCrudService {
 	//TODO validar o delete do Ax01 no CD01020
 	public void saveEntity(Object entity) {
 		hibernate.persistForceRemoveChildren(entity);
+		
+		salvarArquivosAnexos(entity);
 	}
 	
 	public Class<?> getEntityClass(String entityName) throws ClassNotFoundException {
@@ -154,7 +158,7 @@ public class AgiliteCrudService {
 		}
 		
 		if(request.getCompleteFilters() != null && !Utils.isEmpty(request.getCompleteFilters().getValues())){
-			request.getCompleteFilters().getValues().forEach(value -> query.setParameter(value.getName(), "%" + value.getValue() + "%"));
+			request.getCompleteFilters().getValues().forEach(value -> query.setParameter(value.getName().replace(".", "_"), "%" + value.getValue() + "%"));
 		}
 	}
 	
@@ -214,18 +218,21 @@ public class AgiliteCrudService {
 		return joins;
 	}
 	
-	public Object findEntityById(String entityName, Long idEntity) {
+	public Object edit(String entityName, Long idEntity, String customJoins) {
 		String alias = entityName.toLowerCase();
 		@SuppressWarnings("rawtypes")
 		Query query = hibernate.query(StringUtils.concat(
-				createFromWithFetch(entityName, alias), 
+				createFrom(entityName, alias, customJoins), 
 				" WHERE ",
 				alias, 
 				".id = :id")
 			);
 		query.setParameter("id", idEntity);
 		
-		return query.uniqueResult();
+		Object result = query.uniqueResult();
+		carregarAnexos(result);
+		
+		return result;
 	}
 
 	public void archive(String entityName, List<Long> ids) {
@@ -244,29 +251,92 @@ public class AgiliteCrudService {
 	public void delete(String entityName, Long id) {
 		try {
 			hibernate.delete(getEntityClass(entityName), id);
+			
+			deleteAnexos(entityName, id);
 		} catch (ClassNotFoundException e) {
 			throw new RuntimeException("Erro ao excluir entidade", e);
 		}
 	}
 	
-	private String createFromWithFetch(String entityName, String alias){
+	private String createFrom(String entityName, String alias, String customJoins){
+		if(customJoins == null)customJoins = "";
 		String result = StringUtils.concat(" FROM ",  entityName, " ", alias);
+		
+		String fetch = createFetch(entityName, alias);
+		
+		return StringUtils.concat(result, " ", fetch, " ", customJoins);
+	}
+	
+	private String createFetch(String entityName, String alias){
+		String result = "";
 		
 		List<PropertyMetadata> properties = EntitiesMetadata.INSTANCE.getPropertiesByTable(entityName);
 		List<PropertyMetadata> fks = properties.stream().filter(entity -> entity.isFk()).collect(Collectors.toList());
 		if(!Utils.isEmpty(fks)){
 			for(PropertyMetadata fk : fks){
-				result = StringUtils.concat(result, (fk.isRequired() ? " INNER " : " LEFT "), " JOIN FETCH ", alias, ".", fk.getNome());
+				result = StringUtils.concat(result, (fk.isRequired() ? " INNER " : " LEFT "), " JOIN FETCH ", alias, ".", fk.getNome(), " as ", fk.getNome());
 			};
 		}
+		
 		List<OneToManyMetadata> ones = EntitiesMetadata.INSTANCE.getOneToManysByTable(entityName);
 		if(!Utils.isEmpty(ones)){
 			for(OneToManyMetadata one : ones){
-				result = StringUtils.concat(result, " LEFT JOIN FETCH ", alias, ".", one.getNome(),  " as ", one.getNome());
+				result = StringUtils.concat(result, " LEFT JOIN FETCH ", alias, ".", one.getNome(),  " as ", one.getNome().toLowerCase());
+				
+				String fetchToOneToMany = createFetchToOneToMany(one.getClasse(), one.getNome().toLowerCase(), entityName);
+				
+				result = result.concat(fetchToOneToMany);
 			}
 		}
 		
 		return result;
 	}
+	
+	private String createFetchToOneToMany(String entityName, String alias, String parentTable){
+		String result = "";
+		
+		List<PropertyMetadata> properties = EntitiesMetadata.INSTANCE.getPropertiesByTable(entityName);
+		List<PropertyMetadata> fks = properties.stream().filter(entity -> entity.isFk()).collect(Collectors.toList());
+		if(!Utils.isEmpty(fks)){
+			for(PropertyMetadata fk : fks){
+				if(fk.getType().getTypeName().endsWith(".".concat(parentTable)))continue;
+				result = StringUtils.concat(result, " LEFT JOIN FETCH ", alias, ".", fk.getNome(), " as ", fk.getNome());
+			};
+		}
+		
+		return result;
+	}
 
+	private void salvarArquivosAnexos(Object entity){
+		List<Long> filesIds = ((AgiliteAbstractEntity)entity).getFilesIds();
+		if(filesIds != null){
+			String table = EntitiesMetadata.INSTANCE.getTableToFiles();
+			hibernate.query(StringUtils.concat("UPDATE ", table, " SET ", table, "reg_id = :regId WHERE ", table,"id IN (:ids)"))
+			  .setParameter("regId", ((AgiliteAbstractEntity)entity).getIdValue())
+			  .setParameter("ids", filesIds)
+			  .executeUpdate();
+		}
+	}
+	
+	private void carregarAnexos(Object entity){
+		try {
+			List<?> anexos = hibernate.query(StringUtils.concat("FROM Ax10 WHERE LOWER(ax10table) = :ax10table AND ax10regId = :ax10regId ORDER BY ax10clientName"))
+			  .setParameter("ax10table", entity.getClass().getSimpleName().toLowerCase())
+			  .setParameter("ax10regId",  ((AgiliteAbstractEntity)entity).getIdValue())
+			  .list();
+
+			Field field = entity.getClass().getDeclaredField("ax10s");
+			field.setAccessible(true);
+			field.set(entity, anexos);
+		} catch (Exception e) {
+			throw new RuntimeException("Erro ao carregar arquivos anexos", e);
+		}
+	}
+	
+	private void deleteAnexos(String entity, Long regId){
+		hibernate.query(StringUtils.concat("DELETE FROM Ax10 WHERE LOWER(ax10table) = :ax10table AND ax10regId = :ax10regId"))
+			  .setParameter("ax10table", entity.toLowerCase())
+			  .setParameter("ax10regId",  regId)
+			  .executeUpdate();
+	}
 }

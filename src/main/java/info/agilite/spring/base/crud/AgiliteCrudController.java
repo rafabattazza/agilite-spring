@@ -8,7 +8,6 @@ import javax.management.IntrospectionException;
 import javax.transaction.Transactional;
 
 import org.springframework.http.HttpStatus;
-import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -18,6 +17,7 @@ import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import info.agilite.spring.base.JacksonConfig;
 import info.agilite.spring.base.RestMapping;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -28,12 +28,12 @@ import lombok.experimental.FieldDefaults;
 @RequiredArgsConstructor(access = AccessLevel.PACKAGE)
 public class AgiliteCrudController {
 	AgiliteCrudService service;
-	Jackson2ObjectMapperBuilder jsonBuilder;
+	JacksonConfig jackson;
 	
 	@PostMapping("/save/{entity}")
 	@Transactional
 	public Object save(@PathVariable("entity") String entityName, @RequestBody String entity) throws ClassNotFoundException, JsonParseException, JsonMappingException, IOException {
-		ObjectMapper mapper = jsonBuilder.build();
+		ObjectMapper mapper = jackson.createObjectMapper();
 		Object parsedEntity = mapper.readValue(entity.getBytes(), service.getEntityClass(entityName));
 		
 		service.saveEntity(parsedEntity);
@@ -47,10 +47,10 @@ public class AgiliteCrudController {
 
 	
 	@PostMapping("/edit/{entity}/{id}")
-	public Object edit(@PathVariable("entity") String entityName, @PathVariable("id") Long idEntity) throws ClassNotFoundException, IntrospectionException {
+	public Object edit(@PathVariable("entity") String entityName, @PathVariable("id") Long idEntity, @RequestBody(required = false) String customJoins) throws ClassNotFoundException, IntrospectionException {
 		Objects.requireNonNull(idEntity, "Entity id can't be null");
 		
-		Object result = service.findEntityById(entityName, idEntity);
+		Object result = service.edit(entityName, idEntity, customJoins);
 		if(result == null) {
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND);
 		}

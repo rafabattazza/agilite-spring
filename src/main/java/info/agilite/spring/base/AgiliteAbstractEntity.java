@@ -1,6 +1,7 @@
 package info.agilite.spring.base;
 
 import java.io.Serializable;
+import java.util.List;
 
 import javax.persistence.MappedSuperclass;
 
@@ -13,5 +14,9 @@ import info.agilite.spring.hibernate.types.JsonBinaryType;
 public abstract class AgiliteAbstractEntity implements Serializable{
 	private static final long serialVersionUID = 1L;
 	public abstract Long getIdValue();
+	
+	public List<Long> getFilesIds(){
+		return null;
+	}
 
 }

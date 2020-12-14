@@ -1,8 +1,10 @@
 package info.agilite.spring.base.database;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -28,7 +30,7 @@ public class HibernateWrapper {
 	EntityManager em;
 	
 	public void persist(Object entity){
-		em.unwrap(Session.class).saveOrUpdate(entity);
+		session().saveOrUpdate(entity);
 	}
 	
 	public void persistForceRemoveChildren(Object entity){
@@ -36,7 +38,7 @@ public class HibernateWrapper {
 	}
 	
 	public void persistForceRemoveChildren(Object entity, Predicate<String> deleteChildren){
-		Session s = em.unwrap(Session.class);
+		Session s = session();
 		
 		if(((AgiliteAbstractEntity)entity).getIdValue() != null){
 			cascadeDeleteChildren(entity, s, deleteChildren);
@@ -46,31 +48,83 @@ public class HibernateWrapper {
 	}
 
 	public <T> T load(Class<T> clazz, Long id){
-		return em.unwrap(Session.class).load(clazz, id);
+		return session().load(clazz, id);
 	}
 	
 	public <T> T get(Class<T> clazz, Long id){
-		return em.unwrap(Session.class).get(clazz, id);
+		return session().get(clazz, id);
 	}
 	
 	public void delete(Object entity){
-		em.unwrap(Session.class).delete(entity);
+		session().delete(entity);
 	}
 	
 	public void delete(Class<?> clazz, Long id){
-		em.unwrap(Session.class).delete(clazz.getSimpleName(), id);
+		session().delete(clazz.getName(), load(clazz, id));
 	}
 	
-	public Query query(String query){
-		return em.unwrap(Session.class).createQuery(query);
+	public Query<?> query(String query){
+		return session().createQuery(query);
 	}
 	
 	public <T> Query<T> query(String query, Class<T> clazz){
-		return em.unwrap(Session.class).createQuery(query, clazz);
+		return session().createQuery(query, clazz);
 	}
 	
-	public Query nativeQuery(String nativeQuery){
-		return em.unwrap(Session.class).createNativeQuery(nativeQuery);
+	public Query<?> nativeQuery(String nativeQuery){
+		return session().createNativeQuery(nativeQuery);
+	}
+	
+	public <T> List<T> findAll(Class<T> clazz){
+		return session()
+				.createQuery("FROM ".concat(clazz.getSimpleName()).concat(" ORDER BY ").concat(clazz.getSimpleName()).concat("id"), clazz)
+				.list();
+	}
+	
+	public <T> List<T> findAll(Class<T> clazz, String ... fieldsOrderBy){
+		return session()
+				.createQuery("FROM ".concat(clazz.getSimpleName()).concat(" ORDER BY ").concat(Arrays.stream(fieldsOrderBy).collect(Collectors.joining(","))), clazz)
+				.list();
+	}
+	
+	public <T> List<T> find(Class<T> clazz, Map<String, Object> paramsEquals, String ... fieldsOrderBy){
+		boolean hasParamNull = paramsEquals.values().stream().filter(val -> val == null).findFirst().isPresent();
+		if(hasParamNull){
+			throw new RuntimeException("Parâmetro com valor nulo não é permitido no find");
+		}
+		
+		if(fieldsOrderBy == null){
+			fieldsOrderBy = new String[]{clazz.getSimpleName().toLowerCase().concat("id")};
+		}
+		
+		String where = paramsEquals.keySet().stream()
+				.map(val -> {
+					boolean isString = EntitiesMetadata.INSTANCE.getPropertyByName(val).getType() == String.class;
+					if(isString){
+						return "LOWER(".concat(val).concat(") = LOWER(:").concat(val).concat(")");
+					}else{
+						return val.concat(" = :").concat(val);
+					}
+				})
+				.collect(Collectors.joining(" AND "));
+		
+		Query<T> query = session()
+				.createQuery(
+						"FROM "
+						.concat(clazz.getSimpleName())
+						.concat(" WHERE ").concat(where)
+						.concat(" ORDER BY ")
+						.concat(Arrays.stream(fieldsOrderBy).collect(Collectors.joining(","))), clazz);
+		
+		for(String key : paramsEquals.keySet()){
+			query.setParameter(key, paramsEquals.get(key));
+		}
+		
+		return query.list();
+	}
+
+	public Session session() {
+		return em.unwrap(Session.class);
 	}
 	
 	

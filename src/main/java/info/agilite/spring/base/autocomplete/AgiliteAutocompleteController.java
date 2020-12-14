@@ -17,6 +17,7 @@ import info.agilite.spring.base.RestMapping;
 import info.agilite.spring.base.metadata.EntitiesMetadata;
 import info.agilite.spring.base.metadata.PropertyMetadata;
 import info.agilite.utils.StringUtils;
+import info.agilite.utils.Utils;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -61,7 +62,9 @@ public class AgiliteAutocompleteController {
 			result.put(colName, row[i]);
 			i++;
 		}
-		return result;
+		
+		Map<String, Object> nestedResult = Utils.convertToNestedMap(result);
+		return nestedResult;
 	}
 	
 	private String createColumnToQuery(AutoCompleteRequest request) {
