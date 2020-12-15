@@ -87,32 +87,28 @@ public class HibernateWrapper {
 				.list();
 	}
 	
-	public <T> List<T> find(Class<T> clazz, Map<String, Object> paramsEquals, String ... fieldsOrderBy){
-		boolean hasParamNull = paramsEquals.values().stream().filter(val -> val == null).findFirst().isPresent();
-		if(hasParamNull){
-			throw new RuntimeException("Parâmetro com valor nulo não é permitido no find");
-		}
+	public <T> List<T> findList(Class<T> clazz, String query, Map<String, Object> paramsEquals){
+		Query<T> q = session().createQuery(query, clazz);
 		
+		for(String key : paramsEquals.keySet()){
+			q.setParameter(key, paramsEquals.get(key));
+		}	
+		
+		return q.list();
+	}
+	
+	public <T> List<T> findAll(Class<T> clazz, Map<String, Object> paramsEquals, String ... fieldsOrderBy){
 		if(fieldsOrderBy == null){
 			fieldsOrderBy = new String[]{clazz.getSimpleName().toLowerCase().concat("id")};
 		}
 		
-		String where = paramsEquals.keySet().stream()
-				.map(val -> {
-					boolean isString = EntitiesMetadata.INSTANCE.getPropertyByName(val).getType() == String.class;
-					if(isString){
-						return "LOWER(".concat(val).concat(") = LOWER(:").concat(val).concat(")");
-					}else{
-						return val.concat(" = :").concat(val);
-					}
-				})
-				.collect(Collectors.joining(" AND "));
+		String where = createWhereByParams(paramsEquals);
 		
 		Query<T> query = session()
 				.createQuery(
 						"FROM "
 						.concat(clazz.getSimpleName())
-						.concat(" WHERE ").concat(where)
+						.concat(where)
 						.concat(" ORDER BY ")
 						.concat(Arrays.stream(fieldsOrderBy).collect(Collectors.joining(","))), clazz);
 		
@@ -123,6 +119,51 @@ public class HibernateWrapper {
 		return query.list();
 	}
 
+	public <T> T findUniqueField(Class<T> classResult, Class<? extends AgiliteAbstractEntity> classEntity, String field, Map<String, Object> paramsEquals){
+		String where = createWhereByParams(paramsEquals);
+		
+		Query<T> q = session().createQuery(StringUtils.concat(
+				" SELECT ", field, " FROM ", classEntity.getSimpleName(), 
+				where), classResult);
+		
+		for(String key : paramsEquals.keySet()){
+			q.setParameter(key, paramsEquals.get(key));
+		}
+		
+		return q.uniqueResult();
+	}
+	
+	public <T> List<T> findListField(Class<T> classResult, Class<? extends AgiliteAbstractEntity> classEntity, String field, Map<String, Object> paramsEquals){
+		String where = createWhereByParams(paramsEquals);
+		
+		Query<T> q = session().createQuery(StringUtils.concat(
+				" SELECT ", field, " FROM ", classEntity.getSimpleName(), 
+				where), classResult);
+		
+		for(String key : paramsEquals.keySet()){
+			q.setParameter(key, paramsEquals.get(key));
+		}
+		
+		return q.list();
+	}
+	
+	public Long findId(Class<? extends AgiliteAbstractEntity> classEntity, Map<String, Object> paramsEquals){
+		String where = createWhereByParams(paramsEquals);
+		if(StringUtils.isNullOrEmpty(where))throw new RuntimeException("Não é permitido a busca de ID sem informar parâmetros");
+		
+		Query<Long> q = session().createQuery(StringUtils.concat(
+				" SELECT ", classEntity.getSimpleName().toLowerCase(), "id",
+				" FROM ", classEntity.getSimpleName(), 
+				where), Long.class);
+		
+		for(String key : paramsEquals.keySet()){
+			q.setParameter(key, paramsEquals.get(key));
+		}
+		
+		return q.uniqueResult();
+	}
+
+	
 	public Session session() {
 		return em.unwrap(Session.class);
 	}
@@ -162,5 +203,26 @@ public class HibernateWrapper {
 				}
 			});
 		}
+	}
+
+	private String createWhereByParams(Map<String, Object> paramsEquals) {
+		if(paramsEquals == null || paramsEquals.size() == 0)return " ";
+		
+		boolean hasParamNull = paramsEquals.values().stream().filter(val -> val == null).findFirst().isPresent();
+		if(hasParamNull){
+			throw new RuntimeException("Parâmetro com valor nulo não é permitido no find");
+		}
+		
+		String where = paramsEquals.keySet().stream()
+				.map(val -> {
+					boolean isString = EntitiesMetadata.INSTANCE.getPropertyByName(val).getType() == String.class;
+					if(isString){
+						return "LOWER(".concat(val).concat(") = LOWER(:").concat(val).concat(")");
+					}else{
+						return val.concat(" = :").concat(val);
+					}
+				})
+				.collect(Collectors.joining(" AND "));
+		return " WHERE " + where;
 	}
 }
