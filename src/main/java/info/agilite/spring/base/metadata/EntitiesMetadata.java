@@ -4,12 +4,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import info.agilite.spring.base.AgiliteAbstractEntity;
+
 public abstract class EntitiesMetadata {
 	public static EntitiesMetadata INSTANCE;
 
 	protected abstract  Map<String, PropertyMetadata> getAttributesMetadata();
 	protected abstract  Map<String, List<OneToManyMetadata>> getOneToManys();
-	public abstract String getTableToFiles(); 
+	public abstract String getTableToFiles();
+	public abstract Class<? extends AgiliteAbstractEntity> getEntityClass(String name);
 	
 	public PropertyMetadata getPropertyByName(String name) {
 		return getAttributesMetadata().get(name.toLowerCase());

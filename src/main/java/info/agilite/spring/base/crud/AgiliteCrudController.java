@@ -17,8 +17,10 @@ import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import info.agilite.spring.base.AgiliteAbstractEntity;
 import info.agilite.spring.base.JacksonConfig;
 import info.agilite.spring.base.RestMapping;
+import info.agilite.spring.base.metadata.EntitiesMetadata;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -32,25 +34,40 @@ public class AgiliteCrudController {
 	
 	@PostMapping("/save/{entity}")
 	@Transactional
-	public Object save(@PathVariable("entity") String entityName, @RequestBody String entity) throws ClassNotFoundException, JsonParseException, JsonMappingException, IOException {
+	public Object salvar(@PathVariable("entity") String entityName, @RequestBody String entity) throws ClassNotFoundException, JsonParseException, JsonMappingException, IOException {
 		ObjectMapper mapper = jackson.createObjectMapper();
-		Object parsedEntity = mapper.readValue(entity.getBytes(), service.getEntityClass(entityName));
+		AgiliteAbstractEntity parsedEntity = (AgiliteAbstractEntity)mapper.readValue(entity.getBytes(), EntitiesMetadata.INSTANCE.getEntityClass(entityName));
 		
 		service.saveEntity(parsedEntity);
 		return parsedEntity;
 	}
 	
 	@PostMapping("/list/{entity}")
-	public CrudListResponse list(@PathVariable("entity") String entityName, @RequestBody CrudListRequest request) {
+	public CrudListResponse listar(@PathVariable("entity") String entityName, @RequestBody CrudListRequest request) {
 		return service.list(entityName, request);
 	}
 
 	
 	@PostMapping("/edit/{entity}/{id}")
-	public Object edit(@PathVariable("entity") String entityName, @PathVariable("id") Long idEntity, @RequestBody(required = false) String customJoins) throws ClassNotFoundException, IntrospectionException {
+	public Object editar(@PathVariable("entity") String entityName, @PathVariable("id") Long idEntity, @RequestBody(required = false) List<String> viewPropertiesToFetchJoin) throws ClassNotFoundException, IntrospectionException {
+		if(idEntity == null) {
+			return service.novo(entityName);
+		}else {
+			Object result = service.editar(entityName, idEntity, viewPropertiesToFetchJoin);
+			if(result == null) {
+				throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+			}
+			
+			return result;
+		}
+		
+	}
+	
+	@PostMapping("/copy/{entity}/{id}")
+	public Object copiar(@PathVariable("entity") String entityName, @PathVariable("id") Long idEntity, @RequestBody(required = false) List<String> viewPropertiesToFetchJoin) throws ClassNotFoundException, IntrospectionException {
 		Objects.requireNonNull(idEntity, "Entity id can't be null");
 		
-		Object result = service.edit(entityName, idEntity, customJoins);
+		Object result = service.copiar(entityName, idEntity, viewPropertiesToFetchJoin);
 		if(result == null) {
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND);
 		}
@@ -58,22 +75,24 @@ public class AgiliteCrudController {
 		return result;
 	}
 	
-	@PostMapping("/archive/{entity}")
-	@Transactional
-	public void archive(@PathVariable("entity") String entityName, @RequestBody List<Long> ids) {
-		service.archive(entityName, ids);
-	}
 	
 	@PostMapping("/delete/{entity}")
 	@Transactional
-	public void delete(@PathVariable("entity") String entityName, @RequestBody Long id) {
-		service.delete(entityName, id);
+	public void deletar(@PathVariable("entity") String entityName, @RequestBody List<Long> ids) {
+		service.delete(entityName, ids);
 	}
+	
+	@PostMapping("/archive/{entity}")
+	@Transactional
+	public void arquivar(@PathVariable("entity") String entityName, @RequestBody List<Long> ids) {
+		service.arquivar(entityName, ids);
+	}
+	
 	
 	@PostMapping("/unarchive/{entity}")
 	@Transactional
-	public void unarchive(@PathVariable("entity") String entityName, @RequestBody List<Long> ids) {
-		service.unarchive(entityName, ids);
+	public void desArquivar(@PathVariable("entity") String entityName, @RequestBody List<Long> ids) {
+		service.desArquivar(entityName, ids);
 	}
 	
 }
