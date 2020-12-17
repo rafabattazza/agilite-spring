@@ -11,6 +11,7 @@ import info.agilite.spring.base.UserSession;
 import info.agilite.spring.base.database.HibernateWrapper;
 import info.agilite.spring.base.metadata.EntitiesMetadata;
 import info.agilite.spring.base.metadata.PropertyMetadata;
+import info.agilite.utils.StringPair;
 import info.agilite.utils.StringUtils;
 import info.agilite.utils.Utils;
 
@@ -104,8 +105,8 @@ public class CrudProviderListUtils {
 	}
 	
 	private String createCompleteWhere(CrudListRequest request, String alias) {
-		if(request.getCompleteFilters() != null && !Utils.isEmpty(request.getCompleteFilters().getValues())) {
-			List<CrudListCompleteFilterValue> filterFields = request.getCompleteFilters().getValues()
+		if(request.getCompleteFilters() != null && !Utils.isEmpty(request.getCompleteFilters())) {
+			List<StringPair> filterFields = request.getCompleteFilters()
 					.stream()
 					.collect(Collectors.toList());
 
@@ -121,7 +122,7 @@ public class CrudProviderListUtils {
 	private String createArchiveWhere(String classe, CrudListRequest request, String alias) {
 		PropertyMetadata propertyExcluido = EntitiesMetadata.INSTANCE.getPropertyByName(StringUtils.concat(classe, "arquivado"));
 		if(propertyExcluido != null) {
-			if(request.getCompleteFilters() != null && request.getCompleteFilters().isShowArchivedOnly()) {
+			if(request.getCompleteFilters() != null && request.isShowArchivedOnly()) {
 				return StringUtils.concat(propertyExcluido.getNome(), " = 1");
 			}else {
 				return StringUtils.concat(" (", propertyExcluido.getNome(), " IS NULL) ");
@@ -197,8 +198,8 @@ public class CrudProviderListUtils {
 			query.setParameter("simple_fielter_value", "%" + request.getSimpleFilterValue().toLowerCase() + "%");
 		}
 		
-		if(request.getCompleteFilters() != null && !Utils.isEmpty(request.getCompleteFilters().getValues())){
-			request.getCompleteFilters().getValues().forEach(value -> query.setParameter(value.getName().replace(".", "_"), "%" + value.getValue() + "%"));
+		if(request.getCompleteFilters() != null && !Utils.isEmpty(request.getCompleteFilters())){
+			request.getCompleteFilters().forEach(value -> query.setParameter(value.getName().replace(".", "_"), "%" + value.getValue() + "%"));
 		}
 	}
 }

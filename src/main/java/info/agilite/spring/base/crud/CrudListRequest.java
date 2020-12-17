@@ -2,6 +2,7 @@ package info.agilite.spring.base.crud;
 
 import java.util.List;
 
+import info.agilite.utils.StringPair;
 import lombok.AccessLevel;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -21,5 +22,6 @@ public class CrudListRequest {
 	
 	String defaultFilter;
 	
-	CrudListCompleteFilter completeFilters;
+	List<StringPair> completeFilters;
+	boolean showArchivedOnly;
 }
