@@ -9,6 +9,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.transaction.Transactional;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -76,15 +77,9 @@ public class AgiliteCrudController {
 		return result;
 	}
 	
-	@PostMapping("/print/{entity}")
+	@PostMapping(value="/print/{entity}", produces = MediaType.APPLICATION_PDF_VALUE)
 	public void imprimir(HttpServletResponse response, @PathVariable("entity") String entityName, @RequestBody(required = true) List<Long> ids) {
-		try {
-			service.imprimir(entityName, ids, response.getOutputStream());
-			response.setContentType("application/pdf");
-			response.addHeader("Content-Disposition", "inline; filename=jasper.pdf;");
-		} catch (IOException e) {
-			throw new RuntimeException("Erro ao obter o Outputstream da conexão", e);
-		}
+		service.imprimir(entityName, ids, response);
 	}
 	
 	

@@ -1,7 +1,8 @@
 package info.agilite.spring.base.crud;
 
-import java.io.OutputStream;
 import java.util.List;
+
+import javax.servlet.http.HttpServletResponse;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
@@ -44,12 +45,8 @@ public class AgiliteCrudService {
 		getCrudProvider(entityName).arquivar(ids);
 	}
 	
-	public void imprimir(String entityName, List<Long> ids, OutputStream saida) {
-		try {
-			getCrudProvider(entityName).imprimir(ids, saida);
-		} catch (Exception e) {
-			throw new RuntimeException("Erro ao imprimir relatório", e);
-		}
+	public void imprimir(String entityName, List<Long> ids, HttpServletResponse response) {
+		getCrudProvider(entityName).imprimir(ids, response);
 	}
 	
 	public void desArquivar(String entityName, List<Long> ids) {

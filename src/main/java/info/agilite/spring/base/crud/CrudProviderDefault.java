@@ -1,8 +1,9 @@
 package info.agilite.spring.base.crud;
 
-import java.io.OutputStream;
 import java.lang.reflect.Field;
 import java.util.List;
+
+import javax.servlet.http.HttpServletResponse;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
@@ -98,7 +99,7 @@ public class CrudProviderDefault implements AgiliteCrudProvider{
 	}
 
 	@Override
-	public void imprimir(List<Long> ids, OutputStream os) {
+	public void imprimir(List<Long> ids, HttpServletResponse response) {
 		throw new RuntimeException("Método imprimir não implementado");
 	}
 
