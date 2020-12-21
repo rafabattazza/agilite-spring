@@ -1,5 +1,6 @@
 package info.agilite.spring.base.crud;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -27,6 +28,14 @@ public class CrudProviderEditUtils {
 	}
 
 	public AgiliteAbstractEntity editar(Long id, List<String> viewPropertiesToFetchJoin) {
+		Query query = createQueryToEdit(viewPropertiesToFetchJoin);
+		query.setParameter("ids", Arrays.asList(id));
+		
+		AgiliteAbstractEntity result = (AgiliteAbstractEntity)query.uniqueResult();
+		return result;
+	}
+	
+	private Query createQueryToEdit(List<String> viewPropertiesToFetchJoin) {
 		String entityName = entityClass.getSimpleName();
 		String alias = entityName.toLowerCase();
 		String viewJoins = Utils.isEmpty(viewPropertiesToFetchJoin) ? " " : viewPropertiesToFetchJoin.stream().map(prop -> " LEFT JOIN FETCH ".concat(prop)).collect(Collectors.joining(" "));
@@ -35,12 +44,10 @@ public class CrudProviderEditUtils {
 		Query query = hibernate.query(StringUtils.concat(
 				createFrom(entityName, alias, viewJoins), 
 				" WHERE ",
-				alias, ".id = :id")
+				alias, ".id IN (:ids)")
 			);
-		query.setParameter("id", id);
 		
-		AgiliteAbstractEntity result = (AgiliteAbstractEntity)query.uniqueResult();
-		return result;
+		return query;
 	}
 	
 	private String createFrom(String entityName, String alias, String customJoins){

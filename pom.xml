@@ -77,5 +77,10 @@
           <artifactId>hibernate-core</artifactId>
           <scope>provided</scope>
       </dependency>
+	<dependency>
+	    <groupId>net.sf.jasperreports</groupId>
+	    <artifactId>jasperreports</artifactId>
+	    <version>6.16.0</version>
+	</dependency>
     </dependencies>
   </project>

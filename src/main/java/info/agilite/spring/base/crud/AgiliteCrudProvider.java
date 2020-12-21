@@ -1,8 +1,7 @@
 package info.agilite.spring.base.crud;
 
+import java.io.OutputStream;
 import java.util.List;
-
-import org.springframework.core.io.Resource;
 
 import info.agilite.spring.base.AgiliteAbstractEntity;
 import info.agilite.spring.base.UserSession;
@@ -20,7 +19,7 @@ public interface AgiliteCrudProvider{
 	AgiliteAbstractEntity editar(Long id, List<String> viewPropertiesToFetchJoin);
 	AgiliteAbstractEntity copiar(Long id, List<String> viewPropertiesToFetchJoin);
 	void deletar(List<Long> ids);
-	Resource imprimir(List<Long> ids);
+	void imprimir(List<Long> ids, OutputStream os);
 	
 	
 	//Operacoes do editar

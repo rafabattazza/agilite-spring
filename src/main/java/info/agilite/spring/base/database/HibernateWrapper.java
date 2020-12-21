@@ -54,7 +54,7 @@ public class HibernateWrapper {
 	public <T> T get(Class<T> clazz, Long id){
 		return session().get(clazz, id);
 	}
-	
+
 	public void delete(Object entity){
 		session().delete(entity);
 	}

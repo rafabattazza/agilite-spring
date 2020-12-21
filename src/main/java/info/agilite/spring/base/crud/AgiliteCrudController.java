@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Objects;
 
 import javax.management.IntrospectionException;
+import javax.servlet.http.HttpServletResponse;
 import javax.transaction.Transactional;
 
 import org.springframework.http.HttpStatus;
@@ -73,6 +74,17 @@ public class AgiliteCrudController {
 		}
 
 		return result;
+	}
+	
+	@PostMapping("/print/{entity}")
+	public void imprimir(HttpServletResponse response, @PathVariable("entity") String entityName, @RequestBody(required = true) List<Long> ids) {
+		try {
+			service.imprimir(entityName, ids, response.getOutputStream());
+			response.setContentType("application/pdf");
+			response.addHeader("Content-Disposition", "inline; filename=jasper.pdf;");
+		} catch (IOException e) {
+			throw new RuntimeException("Erro ao obter o Outputstream da conexão", e);
+		}
 	}
 	
 	

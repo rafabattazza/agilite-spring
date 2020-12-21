@@ -1,5 +1,6 @@
 package info.agilite.spring.base.crud;
 
+import java.io.OutputStream;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -17,7 +18,7 @@ import lombok.RequiredArgsConstructor;
 public class AgiliteCrudService {
 	@Value("${info.agilite.spring.entity.base-package}")
 	private String entityBasePackage;
-
+	
 	private final CrudProviderMapper providerMapper;
 	private final ApplicationContext appContext;
 	private final HibernateWrapper hibernate;
@@ -41,6 +42,14 @@ public class AgiliteCrudService {
 	
 	public void arquivar(String entityName, List<Long> ids) {
 		getCrudProvider(entityName).arquivar(ids);
+	}
+	
+	public void imprimir(String entityName, List<Long> ids, OutputStream saida) {
+		try {
+			getCrudProvider(entityName).imprimir(ids, saida);
+		} catch (Exception e) {
+			throw new RuntimeException("Erro ao imprimir relatório", e);
+		}
 	}
 	
 	public void desArquivar(String entityName, List<Long> ids) {
