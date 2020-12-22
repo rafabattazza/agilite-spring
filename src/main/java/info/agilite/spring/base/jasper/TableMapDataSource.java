@@ -65,13 +65,12 @@ public class TableMapDataSource implements CloseableDataSource {
 					
 					value = new TableMapDataSource(subDataSet);
 				}
+			}else {
+				value = currentRecord.get(field.getName());
+				return converter.apply(field, value);
 			}
-			
-			value = currentRecord.get(field.getName());
-			
 		}
-		
-		return converter.apply(field, value);
+		return value;
 	}
 	
 	public Object converterValor(JRField field, Object value) {
