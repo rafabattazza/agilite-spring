@@ -29,6 +29,7 @@ public class CrudProviderDefault implements AgiliteCrudProvider{
 	
 	@Override
 	public void salvar(AgiliteAbstractEntity entity) {
+		//TODO - Montar LOGS de alteração
 		hibernate.persistForceRemoveChildren(entity);
 		salvarAnexos(entity);
 	}
@@ -41,6 +42,7 @@ public class CrudProviderDefault implements AgiliteCrudProvider{
 	@Override
 	public AgiliteAbstractEntity novo() {
 		try {
+			//TODO - Montar LOGS de inclusão
 			return entityClass.newInstance();
 		} catch (Exception err) {
 			throw new RuntimeException("Erro ao instanciar um novo registro do tipo " + entityClass.getSimpleName(), err);
