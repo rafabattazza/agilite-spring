@@ -5,6 +5,7 @@ import java.util.Map;
 
 import javax.servlet.http.HttpServletResponse;
 
+import info.agilite.spring.base.http.ResponseUtils;
 import net.sf.jasperreports.engine.JasperExportManager;
 import net.sf.jasperreports.engine.JasperFillManager;
 import net.sf.jasperreports.engine.JasperPrint;
@@ -18,11 +19,8 @@ public class ReportUtil {
 			JasperReport report = (JasperReport)JRLoader.loadObject(reportFile);
 			JasperPrint print = JasperFillManager.fillReport(report, params, dataSource);
 
+			ResponseUtils.definirHeadersParaExportacao(response, "application/pdf", nome);
 			JasperExportManager.exportReportToPdfStream(print, response.getOutputStream());
-			response.addHeader("Content-Type", "application/pdf");
-			String exposedHeaders = "filename, content-type";
-			response.addHeader("Access-Control-Expose-Headers", exposedHeaders);
-			response.addHeader("filename", nome);
 		}catch (Exception e) {
 			throw new RuntimeException("Erro ao gerar PDF", e);
 		}finally {

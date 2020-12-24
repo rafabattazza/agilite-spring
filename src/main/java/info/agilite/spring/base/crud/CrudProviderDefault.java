@@ -104,7 +104,23 @@ public class CrudProviderDefault implements AgiliteCrudProvider{
 	public void imprimir(List<Long> ids, HttpServletResponse response) {
 		throw new RuntimeException("Método imprimir não implementado");
 	}
-
+	
+	protected List<CrudExportColumn> getColunasExportacao() {
+		return new CrudProviderExportarUtils(entityClass, hibernate).getColunasExportacao();
+	}
+	
+	protected String getJoinJdbcParaExportacao() {
+		return new CrudProviderExportarUtils(entityClass, hibernate).getJoinJdbcParaExportacao();
+	}
+	
+	@Override
+	public void exportar(String type, List<Long> ids, HttpServletResponse response) {
+		List<CrudExportColumn> colunas = getColunasExportacao();
+		String joinJdbc = getJoinJdbcParaExportacao();
+		
+		new CrudProviderExportarUtils(entityClass, hibernate).exportar(type, ids, response, colunas, joinJdbc);
+	}
+	
 	@Override
 	public void salvarAnexos(AgiliteAbstractEntity entity) {
 		List<Long> filesIds = ((AgiliteAbstractEntity)entity).getFilesIds();

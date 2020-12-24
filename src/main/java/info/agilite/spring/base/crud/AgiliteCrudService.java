@@ -48,6 +48,10 @@ public class AgiliteCrudService {
 	public void imprimir(String entityName, List<Long> ids, HttpServletResponse response) {
 		getCrudProvider(entityName).imprimir(ids, response);
 	}
+
+	public void exportarExcel(String entityName, List<Long> ids, HttpServletResponse response) {
+		getCrudProvider(entityName).exportar("excel", ids, response);
+	}
 	
 	public void desArquivar(String entityName, List<Long> ids) {
 		getCrudProvider(entityName).desArquivar(ids);

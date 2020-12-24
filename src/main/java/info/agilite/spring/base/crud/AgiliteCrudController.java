@@ -82,6 +82,11 @@ public class AgiliteCrudController {
 		service.imprimir(entityName, ids, response);
 	}
 	
+	@PostMapping(value="/excel/{entity}", produces = MediaType.APPLICATION_PDF_VALUE)
+	public void exportarExcel(HttpServletResponse response, @PathVariable("entity") String entityName, @RequestBody(required = true) List<Long> ids) {
+		service.exportarExcel(entityName, ids, response);
+	}
+	
 	
 	@PostMapping("/delete/{entity}")
 	@Transactional

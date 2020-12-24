@@ -11,8 +11,13 @@ public abstract class EntitiesMetadata {
 
 	protected abstract  Map<String, PropertyMetadata> getAttributesMetadata();
 	protected abstract  Map<String, List<OneToManyMetadata>> getOneToManys();
+	protected abstract  Map<String, String> getTables();
 	public abstract String getTableToFiles();
 	public abstract Class<? extends AgiliteAbstractEntity> getEntityClass(String name);
+	
+	public String getTableLabelByName(String name) {
+		return getTables().get(name.toLowerCase());
+	}
 	
 	public PropertyMetadata getPropertyByName(String name) {
 		return getAttributesMetadata().get(name.toLowerCase());

@@ -21,6 +21,7 @@ public interface AgiliteCrudProvider{
 	AgiliteAbstractEntity copiar(Long id, List<String> viewPropertiesToFetchJoin);
 	void deletar(List<Long> ids);
 	void imprimir(List<Long> ids, HttpServletResponse response);
+	void exportar(String type, List<Long> ids, HttpServletResponse response);
 	
 	
 	//Operacoes do editar

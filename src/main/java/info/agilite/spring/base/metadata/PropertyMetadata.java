@@ -1,6 +1,7 @@
 package info.agilite.spring.base.metadata;
 
 import java.lang.reflect.Type;
+import java.util.Map;
 
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -14,11 +15,13 @@ import lombok.experimental.FieldDefaults;
 @Setter
 public class PropertyMetadata {
 	final String nome;
+	final String sqlNome;
+	final String label;
 	final String table;
 	final Type type;
 	final String size;
 	final boolean required;
 	final boolean fk;
-	
-	EntityMetadata entityMetadata;
+	final boolean autocomplete;
+	final Map<String, String> legendas;
 }
