@@ -136,12 +136,12 @@ public class CrudProviderDefault implements AgiliteCrudProvider{
 	@Override
 	public void carregarAnexos(AgiliteAbstractEntity entity) {
 		try {
-			List<?> anexos = hibernate.query(StringUtils.concat("FROM Ax10 WHERE LOWER(ax10table) = :ax10table AND ax10regId = :ax10regId AND ax10arquivado IS NULL ORDER BY ax10clientName"))
-			  .setParameter("ax10table", entity.getClass().getSimpleName().toLowerCase())
-			  .setParameter("ax10regId",  ((AgiliteAbstractEntity)entity).getIdValue())
+			List<?> anexos = hibernate.query(StringUtils.concat("FROM Aa10 WHERE LOWER(aa10tabela) = :aa10tabela AND aa10regId = :aa10regId AND aa10arquivado IS NULL ORDER BY aa10nome"))
+			  .setParameter("aa10tabela", entity.getClass().getSimpleName().toLowerCase())
+			  .setParameter("aa10regId",  ((AgiliteAbstractEntity)entity).getIdValue())
 			  .list();
 
-			Field field = entity.getClass().getDeclaredField("ax10s");
+			Field field = entity.getClass().getDeclaredField("aa10s");
 			field.setAccessible(true);
 			field.set(entity, anexos);
 		} catch (Exception e) {
@@ -151,9 +151,9 @@ public class CrudProviderDefault implements AgiliteCrudProvider{
 
 	@Override
 	public void deletarAnexos(Long id) {
-		hibernate.query(StringUtils.concat("UPDATE Ax10 SET ax10arquivado = 1 WHERE LOWER(ax10table) = :ax10table AND ax10regId = :ax10regId"))
-		  .setParameter("ax10table", entityClass.getSimpleName().toLowerCase())
-		  .setParameter("ax10regId",  id)
+		hibernate.query(StringUtils.concat("UPDATE Aa10 SET aa10arquivado = 1 WHERE LOWER(aa10tabela) = :aa10tabela AND aa10regId = :aa10regId"))
+		  .setParameter("aa10tabela", entityClass.getSimpleName().toLowerCase())
+		  .setParameter("aa10regId",  id)
 		  .executeUpdate();
 	}
 }
