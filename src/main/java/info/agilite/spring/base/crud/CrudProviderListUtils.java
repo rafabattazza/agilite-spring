@@ -120,10 +120,10 @@ public class CrudProviderListUtils {
 	}
 	
 	private String createArchiveWhere(String classe, CrudListRequest request, String alias) {
-		PropertyMetadata propertyExcluido = EntitiesMetadata.INSTANCE.getPropertyByName(StringUtils.concat(classe, "arquivado"));
+		PropertyMetadata propertyExcluido = EntitiesMetadata.INSTANCE.getPropertyByName(StringUtils.concat(classe, "dtArq"));
 		if(propertyExcluido != null) {
 			if(request.getCompleteFilters() != null && request.isShowArchivedOnly()) {
-				return StringUtils.concat(propertyExcluido.getNome(), " = 1");
+				return StringUtils.concat(propertyExcluido.getNome(), " IS NOT NULL ");
 			}else {
 				return StringUtils.concat(" (", propertyExcluido.getNome(), " IS NULL) ");
 			}

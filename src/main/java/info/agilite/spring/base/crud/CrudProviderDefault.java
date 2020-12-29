@@ -1,6 +1,7 @@
 package info.agilite.spring.base.crud;
 
 import java.lang.reflect.Field;
+import java.time.LocalDate;
 import java.util.List;
 
 import javax.servlet.http.HttpServletResponse;
@@ -59,8 +60,8 @@ public class CrudProviderDefault implements AgiliteCrudProvider{
 	@Override
 	public void arquivar(List<Long> ids) {
 		String entityName = entityClass.getSimpleName();
-		hibernate.query("UPDATE " + entityName + " SET " + entityName + "arquivado = :arquivado WHERE " + entityName +"id IN (:ids)")
-		  .setParameter("arquivado", 1)
+		hibernate.query("UPDATE " + entityName + " SET " + entityName + "dtArq = :dtArq WHERE " + entityName +"id IN (:ids)")
+		  .setParameter("dtArq", LocalDate.now())
 		  .setParameter("ids", ids)
 		  .executeUpdate();
 	}
@@ -68,7 +69,7 @@ public class CrudProviderDefault implements AgiliteCrudProvider{
 	@Override
 	public void desArquivar(List<Long> ids) {
 		String entityName = entityClass.getSimpleName();
-		hibernate.query("UPDATE " + entityName + " SET " + entityName + "arquivado = null WHERE " + entityName +"id IN (:ids)")
+		hibernate.query("UPDATE " + entityName + " SET " + entityName + "dtArq = null WHERE " + entityName +"id IN (:ids)")
 		  .setParameter("ids", ids)
 		  .executeUpdate();
 	}
@@ -136,12 +137,12 @@ public class CrudProviderDefault implements AgiliteCrudProvider{
 	@Override
 	public void carregarAnexos(AgiliteAbstractEntity entity) {
 		try {
-			List<?> anexos = hibernate.query(StringUtils.concat("FROM Aa10 WHERE LOWER(aa10tabela) = :aa10tabela AND aa10regId = :aa10regId AND aa10arquivado IS NULL ORDER BY aa10nome"))
-			  .setParameter("aa10tabela", entity.getClass().getSimpleName().toLowerCase())
-			  .setParameter("aa10regId",  ((AgiliteAbstractEntity)entity).getIdValue())
+			List<?> anexos = hibernate.query(StringUtils.concat("FROM Ca10 WHERE LOWER(ca10tabela) = :ca10tabela AND ca10regId = :ca10regId AND ca10dtArq IS NULL ORDER BY ca10nome"))
+			  .setParameter("ca10tabela", entity.getClass().getSimpleName().toLowerCase())
+			  .setParameter("ca10regId",  ((AgiliteAbstractEntity)entity).getIdValue())
 			  .list();
 
-			Field field = entity.getClass().getDeclaredField("aa10s");
+			Field field = entity.getClass().getDeclaredField("ca10s");
 			field.setAccessible(true);
 			field.set(entity, anexos);
 		} catch (Exception e) {
@@ -151,9 +152,9 @@ public class CrudProviderDefault implements AgiliteCrudProvider{
 
 	@Override
 	public void deletarAnexos(Long id) {
-		hibernate.query(StringUtils.concat("UPDATE Aa10 SET aa10arquivado = 1 WHERE LOWER(aa10tabela) = :aa10tabela AND aa10regId = :aa10regId"))
-		  .setParameter("aa10tabela", entityClass.getSimpleName().toLowerCase())
-		  .setParameter("aa10regId",  id)
+		hibernate.query(StringUtils.concat("UPDATE Ca10 SET ca10dtArq = NOW() WHERE LOWER(ca10tabela) = :ca10tabela AND ca10regId = :ca10regId"))
+		  .setParameter("ca10tabela", entityClass.getSimpleName().toLowerCase())
+		  .setParameter("ca10regId",  id)
 		  .executeUpdate();
 	}
 }
