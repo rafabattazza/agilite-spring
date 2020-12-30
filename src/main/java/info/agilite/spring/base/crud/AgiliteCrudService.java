@@ -22,9 +22,9 @@ public class AgiliteCrudService {
 	
 	private final CrudProviderMapper providerMapper;
 	private final ApplicationContext appContext;
-	private final HibernateWrapper hibernate;
 	private final UserSession session;
-
+	private final HibernateWrapper hibenateWrapper;
+	
 	public void saveEntity(AgiliteAbstractEntity entity) {
 		getCrudProvider(entity.getClass().getSimpleName()).salvar(entity);
 	}
@@ -75,7 +75,7 @@ public class AgiliteCrudService {
 		
 		Class<? extends AgiliteAbstractEntity> entityClass = EntitiesMetadata.INSTANCE.getEntityClass(entityName);		
 		
-		crudProvider.init(entityClass, session, hibernate);
+		crudProvider.init(entityClass, hibenateWrapper, session);
 		return crudProvider;
 	}
 }

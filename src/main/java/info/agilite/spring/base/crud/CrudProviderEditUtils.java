@@ -15,10 +15,10 @@ import info.agilite.spring.base.metadata.PropertyMetadata;
 import info.agilite.utils.StringUtils;
 import info.agilite.utils.Utils;
 
-public class CrudProviderEditUtils {
+class CrudProviderEditUtils {
 	private UserSession session;
-	private HibernateWrapper hibernate;
 	private Class<?> entityClass;
+	private HibernateWrapper hibernate;
 	
 	public CrudProviderEditUtils(Class<?> entityClass, UserSession session, HibernateWrapper hibernate) {
 		super();

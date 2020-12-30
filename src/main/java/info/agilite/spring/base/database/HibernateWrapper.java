@@ -29,15 +29,22 @@ import lombok.experimental.FieldDefaults;
 public class HibernateWrapper {
 	EntityManager em;
 	
-	public void persist(Object entity){
+	public <T extends AgiliteAbstractEntity> T load(Class<T> clazz, Long id){
+		return session().load(clazz, id);
+	}
+	public <T extends AgiliteAbstractEntity> T get(Class<T> clazz, Long id){
+		return session().get(clazz, id);
+	}
+	public void persist(AgiliteAbstractEntity entity){
+		//FIXME empresa
 		session().saveOrUpdate(entity);
 	}
-	
-	public void persistForceRemoveChildren(Object entity){
+	public void persistForceRemoveChildren(AgiliteAbstractEntity entity){
+		//FIXME empresa
 		this.persistForceRemoveChildren(entity, (child) -> true);
 	}
-	
-	public void persistForceRemoveChildren(Object entity, Predicate<String> deleteChildren){
+	public void persistForceRemoveChildren(AgiliteAbstractEntity entity, Predicate<String> deleteChildren){
+		//FIXME empresa
 		Session s = session();
 		
 		if(((AgiliteAbstractEntity)entity).getIdValue() != null){
@@ -47,44 +54,103 @@ public class HibernateWrapper {
 		s.saveOrUpdate(entity);
 	}
 	
-	public <T> T load(Class<T> clazz, Long id){
-		return session().load(clazz, id);
-	}
-	public <T> T get(Class<T> clazz, Long id){
-		return session().get(clazz, id);
-	}
-
-	
-	public void delete(Object entity){
+	public void delete(AgiliteAbstractEntity entity){
 		session().delete(entity);
 	}
-	public void delete(Class<?> clazz, Long id){
+	public void delete(Class<? extends AgiliteAbstractEntity> clazz, Long id){
 		session().delete(clazz.getName(), load(clazz, id));
 	}
-
+	public void delete(Class<? extends AgiliteAbstractEntity> clazz, List<Long> ids){
+		String className = clazz.getSimpleName();
+		session().createQuery("DELETE FROM " + className + " WHERE " + className.toLowerCase() + "id IN :ids")
+			.setParameter("ids", ids)
+			.executeUpdate();
+	}
+	
+	public <T> List<T> findAll(Class<T> clazz){
+		//FIXME empresa
+		return session()
+				.createQuery("FROM ".concat(clazz.getSimpleName()).concat(" ORDER BY ").concat(clazz.getSimpleName()).concat("id"), clazz)
+				.list();
+	}
+	public <T> List<T> findAll(Class<T> clazz, List<Long> ids){
+		//FIXME empresa
+		String columnId = clazz.getSimpleName().concat("id");
+		return session()
+				.createQuery("FROM ".concat(clazz.getSimpleName())
+						.concat(" WHERE ").concat(columnId).concat(" IN (:ids)")
+						.concat(" ORDER BY ").concat(columnId), clazz)
+				.setParameter("ids", ids)
+				.list();
+	}
+	public <T> List<T> findAll(Class<T> clazz, String orderBy){
+		//FIXME empresa
+		return session()
+				.createQuery("FROM ".concat(clazz.getSimpleName()).concat(" ORDER BY ").concat(orderBy), clazz)
+				.list();
+	}
+	
+	public <T> T findUniqueByQuery(Class<T> clazz, String query, Map<Object, Object> params){
+		Query<T> q = session().createQuery(query, clazz);
+		
+		setQueryParams(q, params);
+		
+		return q.uniqueResult();
+	}
+	public <T> List<T> findListByQuery(Class<T> clazz, String query, Map<Object, Object> params){
+		Query<T> q = session().createQuery(query, clazz);
+		
+		setQueryParams(q, params);
+		
+		return q.list();
+	}
+	
+	public <T> List<T> findListByEquals(Class<T> clazz, Map<Object, Object> params){
+		//FIXME empresa
+		Query<T> query = createEqualsQueryOrderBy(clazz, null, params);
+		
+		return query.list();
+	}
+	public <T> List<T> findListByEqualsOrderBy(Class<T> clazz, String orderBy, Map<Object, Object> params){
+		//FIXME empresa
+		Query<T> query = createEqualsQueryOrderBy(clazz, orderBy, params);
+		
+		return query.list();
+	}
+	
+	public <T> T findUniqueFieldByEquals(Class<T> returnType, Class<? extends AgiliteAbstractEntity> entityClass, String field, Map<Object, Object> paramsEquals){
+		String where = createWhereByParams(paramsEquals);
+		Query<T> query = session()
+				.createQuery(
+						"SELECT ".concat(field)
+						.concat("FROM ").concat(entityClass.getSimpleName())
+						.concat(where), returnType);
+		
+		setQueryParams(query, paramsEquals);
+		return query.uniqueResult();
+	}
 	
 	public Query<?> nativeQuery(String nativeQuery){
 		return session().createNativeQuery(nativeQuery);
 	}
-	public Query<?> nativeQuery(String nativeQuery, Map<String, Object> params){
+	public Query<?> nativeQuery(String nativeQuery, Map<Object, Object> params){
 		NativeQuery<?> q = session().createNativeQuery(nativeQuery);
 		setQueryParams(q, params);
 		return q;
 	}
-	public <T> Query<T> nativeQuery(String nativeQuery, Class<T> clazz){
+	public Query<?> nativeQuery(Class<?> clazz, String nativeQuery){
 		return session().createNativeQuery(nativeQuery, clazz);
 	}
-	public <T> Query<T> nativeQuery(String nativeQuery, Class<T> clazz, Map<String, Object> params){
-		NativeQuery<T> q = session().createNativeQuery(nativeQuery, clazz);
+	public Query<?> nativeQuery(Class<?> clazz, String nativeQuery, Map<Object, Object> params){
+		NativeQuery<?> q = session().createNativeQuery(nativeQuery, clazz);
 		setQueryParams(q, params);
 		return q;
 	}
 	
-	
 	public Query<?> query(String query){
 		return session().createQuery(query);
 	}
-	public Query<?> query(String query,  Map<String, Object> params){
+	public Query<?> query(String query,  Map<Object, Object> params){
 		Query<?> q = session().createQuery(query);
 		setQueryParams(q, params);
 		return q;
@@ -92,17 +158,19 @@ public class HibernateWrapper {
 	public <T> Query<T> query(String query, Class<T> clazz){
 		return session().createQuery(query, clazz);
 	}
-	public <T> Query<T> query(String query, Class<T> clazz, Map<String, Object> params){
+	public <T> Query<T> query(String query, Class<T> clazz, Map<Object, Object> params){
 		Query<T> q = session().createQuery(query, clazz);
 		setQueryParams(q, params);
 		return q;
 	}
 	
 	
-	public <T> Query<T> createEqualsQuery(Class<T> clazz, Map<String, Object> paramsEquals){
+	public <T> Query<T> createEqualsQuery(Class<T> clazz, Map<Object, Object> paramsEquals){
+		//FIXME empresa
 		return createEqualsQueryOrderBy(clazz, null, paramsEquals);
 	}
-	public <T> Query<T> createEqualsQueryOrderBy(Class<T> clazz, String orderBy,  Map<String, Object> paramsEquals){
+	public <T> Query<T> createEqualsQueryOrderBy(Class<T> clazz, String orderBy,  Map<Object, Object> paramsEquals){
+		//FIXME empresa
 		if(orderBy == null){
 			orderBy = clazz.getSimpleName().toLowerCase().concat("id");
 		}
@@ -121,92 +189,31 @@ public class HibernateWrapper {
 		return query;
 	}
 	
-	
-	public <T> List<T> findAll(Class<T> clazz){
-		return session()
-				.createQuery("FROM ".concat(clazz.getSimpleName()).concat(" ORDER BY ").concat(clazz.getSimpleName()).concat("id"), clazz)
-				.list();
-	}
-	public <T> List<T> findAll(Class<T> clazz, String orderBy){
-		return session()
-				.createQuery("FROM ".concat(clazz.getSimpleName()).concat(" ORDER BY ").concat(orderBy), clazz)
-				.list();
-	}
-	
-	
-	public <T> T findUniqueByQuery(Class<T> clazz, String query, Map<String, Object> params){
-		Query<T> q = session().createQuery(query, clazz);
-		
-		setQueryParams(q, params);
-		
-		return q.uniqueResult();
-	}
-	public <T> List<T> findListByQuery(Class<T> clazz, String query, Map<String, Object> params){
-		Query<T> q = session().createQuery(query, clazz);
-		
-		setQueryParams(q, params);
-		
-		return q.list();
-	}
-	public <T> List<T> findListByEquals(Class<T> clazz, Map<String, Object> params){
-		Query<T> query = createEqualsQueryOrderBy(clazz, null, params);
-		
-		return query.list();
-	}
-	public <T> List<T> findListByEqualsOrderBy(Class<T> clazz, String orderBy, Map<String, Object> params){
-		Query<T> query = createEqualsQueryOrderBy(clazz, orderBy, params);
-		
-		return query.list();
-	}
-
-	
-
-	public <T> T findUniqueFieldByEquals(Class<T> classResult, Class<? extends AgiliteAbstractEntity> classEntity, String field, Map<String, Object> paramsEquals){
-		String where = createWhereByParams(paramsEquals);
-		
-		Query<T> q = session().createQuery(StringUtils.concat(
-				" SELECT ", field, " FROM ", classEntity.getSimpleName(), 
-				where), classResult);
-		
-		setQueryParams(q, paramsEquals);
-		
-		return q.uniqueResult();
-	}
-	public <T> List<T> findListFieldByEquals(Class<T> classResult, Class<? extends AgiliteAbstractEntity> classEntity, String field, Map<String, Object> paramsEquals){
-		String where = createWhereByParams(paramsEquals);
-		
-		Query<T> q = session().createQuery(StringUtils.concat(
-				" SELECT ", field, " FROM ", classEntity.getSimpleName(), 
-				where), classResult);
-		
-		setQueryParams(q, paramsEquals);
-		
-		return q.list();
-	}
-	public Long findIdByEquals(Class<? extends AgiliteAbstractEntity> classEntity, Map<String, Object> paramsEquals){
-		String where = createWhereByParams(paramsEquals);
-		if(StringUtils.isNullOrEmpty(where))throw new RuntimeException("Não é permitido a busca de ID sem informar parâmetros");
-		
-		Query<Long> q = session().createQuery(StringUtils.concat(
-				" SELECT ", classEntity.getSimpleName().toLowerCase(), "id",
-				" FROM ", classEntity.getSimpleName(), 
-				where), Long.class);
-		
-		setQueryParams(q, paramsEquals);
-		return q.uniqueResult();
-	}
-	
 	public Session session() {
 		return em.unwrap(Session.class);
 	}
 	
-	public <T> void setQueryParams(Query<T> q, Map<String, Object> parametros) {
-		for(String key : parametros.keySet()){
-			q.setParameter(key, parametros.get(key));
+	private String createWhereByParams(Map<Object, Object> paramsEquals) {
+		if(paramsEquals == null || paramsEquals.size() == 0)return " ";
+		
+		boolean hasParamNull = paramsEquals.values().stream().filter(val -> val == null).findFirst().isPresent();
+		if(hasParamNull){
+			throw new RuntimeException("Parâmetro com valor nulo não é permitido no find");
 		}
+		
+		String where = paramsEquals.keySet().stream()
+				.map(val -> val.toString())
+				.map(val -> {
+					boolean isString = EntitiesMetadata.INSTANCE.getPropertyByName(val).getType() == String.class;
+					if(isString){
+						return "LOWER(".concat(val).concat(") = LOWER(:").concat(val).concat(")");
+					}else{
+						return val.concat(" = :").concat(val);
+					}
+				})
+				.collect(Collectors.joining(" AND "));
+		return " WHERE " + where;
 	}
-	
-	@SuppressWarnings("unchecked")
 	private void cascadeDeleteChildren(Object entity, Session s, Predicate<String> deleteChildren) {
 		List<OneToManyMetadata> ones = EntitiesMetadata.INSTANCE.getOneToManysByTable(entity.getClass().getSimpleName());
 		if(!Utils.isEmpty(ones)){
@@ -241,25 +248,9 @@ public class HibernateWrapper {
 			});
 		}
 	}
-
-	private String createWhereByParams(Map<String, Object> paramsEquals) {
-		if(paramsEquals == null || paramsEquals.size() == 0)return " ";
-		
-		boolean hasParamNull = paramsEquals.values().stream().filter(val -> val == null).findFirst().isPresent();
-		if(hasParamNull){
-			throw new RuntimeException("Parâmetro com valor nulo não é permitido no find");
+	public void setQueryParams(Query<?> q, Map<Object, Object> parametros) {
+		for(Object key : parametros.keySet()){
+			q.setParameter(key.toString(), parametros.get(key));
 		}
-		
-		String where = paramsEquals.keySet().stream()
-				.map(val -> {
-					boolean isString = EntitiesMetadata.INSTANCE.getPropertyByName(val).getType() == String.class;
-					if(isString){
-						return "LOWER(".concat(val).concat(") = LOWER(:").concat(val).concat(")");
-					}else{
-						return val.concat(" = :").concat(val);
-					}
-				})
-				.collect(Collectors.joining(" AND "));
-		return " WHERE " + where;
 	}
 }

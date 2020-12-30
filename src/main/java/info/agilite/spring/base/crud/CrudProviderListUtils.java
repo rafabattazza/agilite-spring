@@ -15,7 +15,7 @@ import info.agilite.utils.StringPair;
 import info.agilite.utils.StringUtils;
 import info.agilite.utils.Utils;
 
-public class CrudProviderListUtils {
+class CrudProviderListUtils {
 	private UserSession session;
 	private HibernateWrapper hibernate;
 	private Class<?> entityClass;

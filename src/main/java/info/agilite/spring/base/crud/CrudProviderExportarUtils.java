@@ -32,7 +32,7 @@ import info.agilite.spring.base.metadata.EntitiesMetadata;
 import info.agilite.spring.base.metadata.PropertyMetadata;
 import info.agilite.utils.StringUtils;
 
-public class CrudProviderExportarUtils {
+class CrudProviderExportarUtils {
 	private HibernateWrapper hibernate;
 	private Class<?> entityClass;
 	

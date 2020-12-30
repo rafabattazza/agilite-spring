@@ -9,7 +9,7 @@ import info.agilite.spring.base.UserSession;
 import info.agilite.spring.base.database.HibernateWrapper;
 
 public interface AgiliteCrudProvider{
-	void init(Class<? extends AgiliteAbstractEntity> entityClass, UserSession session, HibernateWrapper hibernate);
+	void init(Class<? extends AgiliteAbstractEntity> entityClass, HibernateWrapper hibernate, UserSession session);
 	
 	//Listar - Filtrar
 	CrudListResponse listar(CrudListRequest crudRequest);

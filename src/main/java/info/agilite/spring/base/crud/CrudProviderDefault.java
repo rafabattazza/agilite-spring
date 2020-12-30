@@ -6,6 +6,8 @@ import java.util.List;
 
 import javax.servlet.http.HttpServletResponse;
 
+import org.springframework.stereotype.Service;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import info.agilite.spring.base.AgiliteAbstractEntity;
@@ -15,17 +17,20 @@ import info.agilite.spring.base.json.RemoveIdsJsonFilter;
 import info.agilite.spring.base.metadata.EntitiesMetadata;
 import info.agilite.utils.StringUtils;
 import info.agilite.utils.jackson.JSonMapperCreator;
+import lombok.RequiredArgsConstructor;
 
+@Service
+@RequiredArgsConstructor
 public class CrudProviderDefault implements AgiliteCrudProvider{
 	protected Class<? extends AgiliteAbstractEntity> entityClass;
 	protected UserSession session;
 	protected HibernateWrapper hibernate;
 	
 	@Override
-	public void init(Class<? extends AgiliteAbstractEntity> entityClass, UserSession session, HibernateWrapper hibernate) {
+	public void init(Class<? extends AgiliteAbstractEntity> entityClass, HibernateWrapper hibernate, UserSession session) {
 		this.entityClass = entityClass;
-		this.session = session;
 		this.hibernate = hibernate;
+		this.session = session;
 	}
 	
 	@Override
