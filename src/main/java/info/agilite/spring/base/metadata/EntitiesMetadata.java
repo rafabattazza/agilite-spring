@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 import info.agilite.spring.base.AgiliteAbstractEntity;
+import info.agilite.utils.StringUtils;
 
 public abstract class EntitiesMetadata {
 	public static EntitiesMetadata INSTANCE;
@@ -20,7 +21,7 @@ public abstract class EntitiesMetadata {
 	}
 	
 	public PropertyMetadata getPropertyByName(String name) {
-		return getAttributesMetadata().get(name.toLowerCase());
+		return getAttributesMetadata().get(name.contains(".") ? StringUtils.substringAfterLast(name.toLowerCase(), ".")  : name.toLowerCase());
 	}
 	public List<PropertyMetadata> getPropertiesByTable(String tableName){
 		tableName = tableName.toLowerCase();

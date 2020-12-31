@@ -208,12 +208,17 @@ public class HibernateWrapper {
 					if(isString){
 						return "LOWER(".concat(val).concat(") = LOWER(:").concat(val).concat(")");
 					}else{
-						return val.concat(" = :").concat(val);
+						return val.concat(" = :").concat(normalizeParamName(val));
 					}
 				})
 				.collect(Collectors.joining(" AND "));
 		return " WHERE " + where;
 	}
+	
+	private String normalizeParamName(String val) {
+		return val.replace(".", "_");
+	}
+	
 	private void cascadeDeleteChildren(Object entity, Session s, Predicate<String> deleteChildren) {
 		List<OneToManyMetadata> ones = EntitiesMetadata.INSTANCE.getOneToManysByTable(entity.getClass().getSimpleName());
 		if(!Utils.isEmpty(ones)){
@@ -250,7 +255,7 @@ public class HibernateWrapper {
 	}
 	public void setQueryParams(Query<?> q, Map<Object, Object> parametros) {
 		for(Object key : parametros.keySet()){
-			q.setParameter(key.toString(), parametros.get(key));
+			q.setParameter(normalizeParamName(key.toString()), parametros.get(key));
 		}
 	}
 }
