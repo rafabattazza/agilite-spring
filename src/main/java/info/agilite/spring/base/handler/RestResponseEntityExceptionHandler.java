@@ -18,7 +18,7 @@ import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
-import info.agilite.spring.base.ValidationException;
+import info.agilite.utils.ValidationException;
 /**
  * Handler para exceptions, retorna no body da requisição um JSON gerado a partir da classe {@link ExceptionEntity}
  * 
@@ -33,7 +33,7 @@ public class RestResponseEntityExceptionHandler extends ResponseEntityExceptionH
 	@ExceptionHandler(ValidationException.class)
 	protected ResponseEntity<Object> handleResponseStatusException(ValidationException ex, WebRequest request) {
 		ex.printStackTrace();//FIXME log e send server error
-		return handleExceptionInternal(ex, null, null, HttpStatus.BAD_REQUEST, request);
+		return handleExceptionInternal(ex, null, null, HttpStatus.PRECONDITION_REQUIRED, request);
 	}
 	
 	@ResponseBody

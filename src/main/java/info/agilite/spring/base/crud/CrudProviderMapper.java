@@ -21,7 +21,7 @@ public class CrudProviderMapper {
 		if(crudProviders.containsKey(entityName.toLowerCase())) {
 			return appContext.getBean(crudProviders.get(entityName.toLowerCase()));
 		}else {
-			return appContext.getBean(CrudProviderDefault.class);
+			return new CrudProviderDefault();
 		}
 	}
 	

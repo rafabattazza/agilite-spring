@@ -17,10 +17,8 @@ import info.agilite.spring.base.json.RemoveIdsJsonFilter;
 import info.agilite.spring.base.metadata.EntitiesMetadata;
 import info.agilite.utils.StringUtils;
 import info.agilite.utils.jackson.JSonMapperCreator;
-import lombok.RequiredArgsConstructor;
 
 @Service
-@RequiredArgsConstructor
 public class CrudProviderDefault implements AgiliteCrudProvider{
 	protected Class<? extends AgiliteAbstractEntity> entityClass;
 	protected UserSession session;
@@ -142,14 +140,16 @@ public class CrudProviderDefault implements AgiliteCrudProvider{
 	@Override
 	public void carregarAnexos(AgiliteAbstractEntity entity) {
 		try {
+			Field field = entity.getClass().getDeclaredField("ca10s");
 			List<?> anexos = hibernate.query(StringUtils.concat("FROM Ca10 WHERE LOWER(ca10tabela) = :ca10tabela AND ca10regId = :ca10regId AND ca10dtArq IS NULL ORDER BY ca10nome"))
 			  .setParameter("ca10tabela", entity.getClass().getSimpleName().toLowerCase())
 			  .setParameter("ca10regId",  ((AgiliteAbstractEntity)entity).getIdValue())
 			  .list();
 
-			Field field = entity.getClass().getDeclaredField("ca10s");
 			field.setAccessible(true);
 			field.set(entity, anexos);
+		} catch (NoSuchFieldException ignore) {
+			//Ignore
 		} catch (Exception e) {
 			throw new RuntimeException("Erro ao carregar arquivos anexos", e);
 		}
