@@ -11,6 +11,10 @@ import info.agilite.spring.base.database.HibernateWrapper;
 public interface AgiliteCrudProvider{
 	void init(Class<? extends AgiliteAbstractEntity> entityClass, HibernateWrapper hibernate, UserSession session);
 	
+	String nomeTarefa();
+	void validarAcessoAoListar();
+	void validarAcessoAoSalvar();
+	
 	//Listar - Filtrar
 	CrudListResponse listar(CrudListRequest crudRequest);
 	

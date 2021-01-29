@@ -32,6 +32,21 @@ public class CrudProviderDefault implements AgiliteCrudProvider{
 	}
 	
 	@Override
+	public String nomeTarefa() {
+		return this.getClass().getSimpleName().toUpperCase().replace("PROVIDER", "");
+	}
+
+	@Override
+	public void validarAcessoAoListar() {
+		session.validarLeitura(nomeTarefa());
+	}
+
+	@Override
+	public void validarAcessoAoSalvar() {
+		session.validarAlteracao(nomeTarefa());
+	}
+
+	@Override
 	public void salvar(AgiliteAbstractEntity entity) {
 		//TODO - Montar LOGS de alteração
 		hibernate.persistForceRemoveChildren(entity);

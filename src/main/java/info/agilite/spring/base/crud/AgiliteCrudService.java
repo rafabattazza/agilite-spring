@@ -25,44 +25,73 @@ public class AgiliteCrudService {
 	private final UserSession session;
 	private final HibernateWrapper hibenateWrapper;
 	
-	public void saveEntity(AgiliteAbstractEntity entity) {
-		getCrudProvider(entity.getClass().getSimpleName()).salvar(entity);
-	}
-	
 	public CrudListResponse list(String classe, CrudListRequest crudRequest) {
-		return getCrudProvider(classe).listar(crudRequest);
+		AgiliteCrudProvider crudProvider = getCrudProvider(classe);
+		crudProvider.validarAcessoAoListar();
+		return crudProvider.listar(crudRequest);
+	}
+
+	public void saveEntity(AgiliteAbstractEntity entity) {
+		AgiliteCrudProvider crudProvider = getCrudProvider(entity.getClass().getSimpleName());
+		crudProvider.validarAcessoAoSalvar();
+
+		crudProvider.salvar(entity);
 	}
 	
 	public Object editar(String entityName, Long idEntity, List<String> viewPropertiesToFetchJoin) {
-		return getCrudProvider(entityName).editar(idEntity, viewPropertiesToFetchJoin);
+		AgiliteCrudProvider crudProvider = getCrudProvider(entityName);
+		crudProvider.validarAcessoAoListar();
+		
+		return crudProvider.editar(idEntity, viewPropertiesToFetchJoin);
 	}
 	
 	public Object copiar(String entityName, Long idEntity, List<String> viewPropertiesToFetchJoin) {
-		return getCrudProvider(entityName).copiar(idEntity, viewPropertiesToFetchJoin);
+		AgiliteCrudProvider crudProvider = getCrudProvider(entityName);
+		crudProvider.validarAcessoAoListar();
+		
+		return crudProvider.copiar(idEntity, viewPropertiesToFetchJoin);
 	}
 	
 	public void arquivar(String entityName, List<Long> ids) {
-		getCrudProvider(entityName).arquivar(ids);
+		AgiliteCrudProvider crudProvider = getCrudProvider(entityName);
+		crudProvider.validarAcessoAoSalvar();
+		
+		crudProvider.arquivar(ids);
 	}
 	
 	public void imprimir(String entityName, List<Long> ids, HttpServletResponse response) {
-		getCrudProvider(entityName).imprimir(ids, response);
+		AgiliteCrudProvider crudProvider = getCrudProvider(entityName);
+		crudProvider.validarAcessoAoListar();
+		
+		crudProvider.imprimir(ids, response);
 	}
 
 	public void exportarExcel(String entityName, List<Long> ids, HttpServletResponse response) {
-		getCrudProvider(entityName).exportar("excel", ids, response);
+		AgiliteCrudProvider crudProvider = getCrudProvider(entityName);
+		crudProvider.validarAcessoAoListar();
+		
+		crudProvider.exportar("excel", ids, response);
 	}
 	
 	public void desArquivar(String entityName, List<Long> ids) {
-		getCrudProvider(entityName).desArquivar(ids);
+		AgiliteCrudProvider crudProvider = getCrudProvider(entityName);
+		crudProvider.validarAcessoAoSalvar();
+		
+		crudProvider.desArquivar(ids);
 	}
 	
 	public void delete(String entityName, List<Long> ids) {
-		getCrudProvider(entityName).deletar(ids);
+		AgiliteCrudProvider crudProvider = getCrudProvider(entityName);
+		crudProvider.validarAcessoAoSalvar();
+		
+		crudProvider.deletar(ids);
 	}
 	
 	public AgiliteAbstractEntity novo(String entityName) {
-		return getCrudProvider(entityName).novo();
+		AgiliteCrudProvider crudProvider = getCrudProvider(entityName);
+		crudProvider.validarAcessoAoSalvar();
+		
+		return crudProvider.novo();
 	}
 	
 	protected AgiliteCrudProvider getCrudProvider(final String entityName) {

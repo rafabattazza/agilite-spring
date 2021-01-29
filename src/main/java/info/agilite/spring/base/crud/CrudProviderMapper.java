@@ -21,7 +21,7 @@ public class CrudProviderMapper {
 		if(crudProviders.containsKey(entityName.toLowerCase())) {
 			return appContext.getBean(crudProviders.get(entityName.toLowerCase()));
 		}else {
-			return new CrudProviderDefault();
+			throw new RuntimeException("Não foi possível localizar o provider para a entidade '" + entityName + "'");
 		}
 	}
 	
