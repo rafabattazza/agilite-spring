@@ -39,6 +39,9 @@ public class HibernateWrapper {
 		//FIXME empresa
 		session().saveOrUpdate(entity);
 	}
+	public void flush() {
+		session().flush();
+	}
 	public void persistForceRemoveChildren(AgiliteAbstractEntity entity){
 		//FIXME empresa
 		this.persistForceRemoveChildren(entity, (child) -> true);

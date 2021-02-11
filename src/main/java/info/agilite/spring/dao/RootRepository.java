@@ -26,8 +26,17 @@ public class RootRepository {
 		return hibernate.get(clazz, id);
 	}
 
+	public void flush() {
+		hibernate.flush();
+	}
+	
 	public void persist(AgiliteAbstractEntity entity) {
 		hibernate.persist(entity);
+	}
+	
+	public void persistAndFlush(AgiliteAbstractEntity entity) {
+		hibernate.persist(entity);
+		hibernate.flush();
 	}
 
 	public void persistForceRemoveChildren(AgiliteAbstractEntity entity) {
@@ -36,6 +45,16 @@ public class RootRepository {
 
 	public void persistForceRemoveChildren(AgiliteAbstractEntity entity, Predicate<String> deleteChildren) {
 		hibernate.persistForceRemoveChildren(entity, deleteChildren);
+	}
+	
+	public void persistForceRemoveChildrenAndFlush(AgiliteAbstractEntity entity) {
+		hibernate.persistForceRemoveChildren(entity);
+		hibernate.flush();
+	}
+
+	public void persistForceRemoveChildrenAndFlush(AgiliteAbstractEntity entity, Predicate<String> deleteChildren) {
+		hibernate.persistForceRemoveChildren(entity, deleteChildren);
+		hibernate.flush();
 	}
 
 	public void delete(AgiliteAbstractEntity entity) {
