@@ -145,7 +145,7 @@ public class CrudProviderDefault implements AgiliteCrudProvider{
 		List<Long> filesIds = ((AgiliteAbstractEntity)entity).getFilesIds();
 		if(filesIds != null){
 			String table = EntitiesMetadata.INSTANCE.getTableToFiles();
-			hibernate.query(StringUtils.concat("UPDATE ", table, " SET ", table, "reg_id = :regId WHERE ", table,"id IN (:ids)"))
+			hibernate.query(StringUtils.concat("UPDATE ", table, " SET ", table, "regId = :regId WHERE ", table,"id IN (:ids)"))
 			  .setParameter("regId", ((AgiliteAbstractEntity)entity).getIdValue())
 			  .setParameter("ids", filesIds)
 			  .executeUpdate();
