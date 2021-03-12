@@ -6,6 +6,7 @@ import java.util.function.Predicate;
 
 import org.hibernate.Session;
 import org.hibernate.query.Query;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import info.agilite.spring.base.AgiliteAbstractEntity;
 import info.agilite.spring.base.database.HibernateWrapper;
@@ -31,41 +32,76 @@ public class RootRepository {
 	}
 	
 	public void persist(AgiliteAbstractEntity entity) {
+		if(!TransactionSynchronizationManager.isActualTransactionActive()) {
+			throw new RuntimeException("Não é permitido salvar registros sem uma transação aberta");
+		}
 		hibernate.persist(entity);
 	}
 	
 	public void persistAndFlush(AgiliteAbstractEntity entity) {
+		if(!TransactionSynchronizationManager.isActualTransactionActive()) {
+			throw new RuntimeException("Não é permitido salvar registros sem uma transação aberta");
+		}
+
 		hibernate.persist(entity);
 		hibernate.flush();
 	}
 
 	public void persistForceRemoveChildren(AgiliteAbstractEntity entity) {
+		if(!TransactionSynchronizationManager.isActualTransactionActive()) {
+			throw new RuntimeException("Não é permitido salvar registros sem uma transação aberta");
+		}
+
 		hibernate.persistForceRemoveChildren(entity);
 	}
 
 	public void persistForceRemoveChildren(AgiliteAbstractEntity entity, Predicate<String> deleteChildren) {
+		if(!TransactionSynchronizationManager.isActualTransactionActive()) {
+			throw new RuntimeException("Não é permitido salvar registros sem uma transação aberta");
+		}
+
 		hibernate.persistForceRemoveChildren(entity, deleteChildren);
 	}
 	
 	public void persistForceRemoveChildrenAndFlush(AgiliteAbstractEntity entity) {
+		if(!TransactionSynchronizationManager.isActualTransactionActive()) {
+			throw new RuntimeException("Não é permitido salvar registros sem uma transação aberta");
+		}
+
 		hibernate.persistForceRemoveChildren(entity);
 		hibernate.flush();
 	}
 
 	public void persistForceRemoveChildrenAndFlush(AgiliteAbstractEntity entity, Predicate<String> deleteChildren) {
+		if(!TransactionSynchronizationManager.isActualTransactionActive()) {
+			throw new RuntimeException("Não é permitido salvar registros sem uma transação aberta");
+		}
+
 		hibernate.persistForceRemoveChildren(entity, deleteChildren);
 		hibernate.flush();
 	}
 
 	public void delete(AgiliteAbstractEntity entity) {
+		if(!TransactionSynchronizationManager.isActualTransactionActive()) {
+			throw new RuntimeException("Não é permitido deletar registros sem uma transação aberta");
+		}
+
 		hibernate.delete(entity);
 	}
 
 	public void delete(Class<? extends AgiliteAbstractEntity> clazz, Long id) {
+		if(!TransactionSynchronizationManager.isActualTransactionActive()) {
+			throw new RuntimeException("Não é permitido deletar registros sem uma transação aberta");
+		}
+
 		hibernate.delete(clazz, id);
 	}
 
 	public void delete(Class<? extends AgiliteAbstractEntity> clazz, List<Long> ids) {
+		if(!TransactionSynchronizationManager.isActualTransactionActive()) {
+			throw new RuntimeException("Não é permitido deletar registros sem uma transação aberta");
+		}
+
 		hibernate.delete(clazz, ids);
 	}
 

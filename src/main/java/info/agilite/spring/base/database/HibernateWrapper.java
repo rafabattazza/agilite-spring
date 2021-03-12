@@ -93,6 +93,7 @@ public class HibernateWrapper {
 				.list();
 	}
 	
+	
 	public <T> T findUniqueByQuery(Class<T> clazz, String query, Map<Object, Object> params){
 		Query<T> q = session().createQuery(query, clazz);
 		
@@ -106,6 +107,14 @@ public class HibernateWrapper {
 		setQueryParams(q, params);
 		
 		return q.list();
+	}
+	
+	public <T> T findUniqueByEquals(Class<T> clazz, Map<Object, Object> paramsEquals){
+		Query<T> q = createEqualsQuery(clazz, paramsEquals);
+		
+		setQueryParams(q, paramsEquals);
+		
+		return q.uniqueResult();
 	}
 	
 	public <T> List<T> findListByEquals(Class<T> clazz, Map<Object, Object> params){
