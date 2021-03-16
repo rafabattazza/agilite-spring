@@ -4,8 +4,9 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import javax.persistence.EntityManager;
-import javax.persistence.TypedQuery;
 
+import org.hibernate.Session;
+import org.hibernate.query.Query;
 import org.springframework.stereotype.Service;
 
 import com.google.common.base.Splitter;
@@ -23,7 +24,7 @@ public class FkService {
 	EntityManager em;
 	
 	public List<FkResult> findFkRows(FkRequest request){
-		TypedQuery<FkResult> q = em.createQuery(" SELECT new info.agilite.spring.base.fk.FkResult(" +
+		Query<FkResult> q = em.unwrap(Session.class).createQuery(" SELECT new info.agilite.spring.base.fk.FkResult(" +
 				 	   " id, " + getFields(request) +
 				 	   " ) " +
 					   " FROM " + request.getEntityName() +
@@ -35,7 +36,7 @@ public class FkService {
 			q.setParameter("querySelect", "%" + request.getQuery().toLowerCase() + "%");
 		}
 		
-		return q.getResultList();
+		return q.list();
 	}
 	
 	public FkResult findFkById(Long id, FkRequest request){

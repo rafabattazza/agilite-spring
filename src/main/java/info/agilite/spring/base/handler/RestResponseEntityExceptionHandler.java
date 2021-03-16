@@ -18,7 +18,9 @@ import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
-import info.agilite.spring.base.ValidationException;
+import info.agilite.utils.ForbiddenException;
+import info.agilite.utils.ValidationException;
+import lombok.extern.slf4j.Slf4j;
 /**
  * Handler para exceptions, retorna no body da requisição um JSON gerado a partir da classe {@link ExceptionEntity}
  * 
@@ -28,18 +30,26 @@ import info.agilite.spring.base.ValidationException;
  */
 
 @ControllerAdvice
+@Slf4j
 public class RestResponseEntityExceptionHandler extends ResponseEntityExceptionHandler  {
 	@ResponseBody
 	@ExceptionHandler(ValidationException.class)
 	protected ResponseEntity<Object> handleResponseStatusException(ValidationException ex, WebRequest request) {
-		ex.printStackTrace();//FIXME log e send server error
-		return handleExceptionInternal(ex, null, null, HttpStatus.BAD_REQUEST, request);
+		log.error("RestResponseEntityExceptionHandler", ex);
+		return handleExceptionInternal(ex, null, null, HttpStatus.PRECONDITION_REQUIRED, request);
+	}
+	
+	@ResponseBody
+	@ExceptionHandler(ForbiddenException.class)
+	protected ResponseEntity<Object> handleForbiddenException(ForbiddenException ex, WebRequest request) {
+		log.error("ForbiddenException", ex);
+		return handleExceptionInternal(ex, null, null, HttpStatus.FORBIDDEN, request);
 	}
 	
 	@ResponseBody
 	@ExceptionHandler(RestClientResponseException.class)
 	protected ResponseEntity<Object> handleResponseStatusException(RestClientResponseException ex, WebRequest request) {
-		ex.printStackTrace();//FIXME log e send server error
+		log.error("RestClientResponseException", ex);
 		return handleExceptionInternal(ex, null, null, HttpStatus.valueOf(ex.getRawStatusCode()),  request);
 	}
 	

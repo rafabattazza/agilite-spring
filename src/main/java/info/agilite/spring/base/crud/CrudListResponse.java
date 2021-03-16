@@ -1,17 +1,19 @@
 package info.agilite.spring.base.crud;
 
+import java.util.List;
+import java.util.Map;
+
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
-import lombok.Getter;
+import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 import lombok.experimental.FieldDefaults;
 
-@FieldDefaults(level=AccessLevel.PRIVATE)
-@Getter
-@Setter
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class CrudStartResult {
-	private CrudResult result;
+@FieldDefaults(level = AccessLevel.PRIVATE)
+public class CrudListResponse {
+	List<Map<String, Object>> data;
+	CrudListPagination pagination;
 }

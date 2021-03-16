@@ -2,17 +2,16 @@ package info.agilite.spring.base.crud;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
-import lombok.Getter;
+import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 import lombok.experimental.FieldDefaults;
 
-@FieldDefaults(level=AccessLevel.PRIVATE)
-@Getter
-@Setter
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class CrudFilterParameter {
-	String name;
-	Object value;
+@FieldDefaults(level = AccessLevel.PRIVATE)
+public class CrudListPagination {
+	String sortBy;
+	boolean descending;
+	Integer page, rowsPerPage, rowsNumber;
 }
