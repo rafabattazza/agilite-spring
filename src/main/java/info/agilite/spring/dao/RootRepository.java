@@ -145,11 +145,11 @@ public class RootRepository {
 		return hibernate.nativeQuery(nativeQuery, params);
 	}
 
-	protected Query<?> nativeQuery(Class<?> clazz, String nativeQuery) {
+	protected <T> Query<T> nativeQuery(Class<T> clazz, String nativeQuery) {
 		return hibernate.nativeQuery(clazz, nativeQuery);
 	}
 
-	protected Query<?> nativeQuery(Class<?> clazz, String nativeQuery, Map<Object, Object> params) {
+	protected <T> Query<T> nativeQuery(Class<T> clazz, String nativeQuery, Map<Object, Object> params) {
 		return hibernate.nativeQuery(clazz, nativeQuery, params);
 	}
 

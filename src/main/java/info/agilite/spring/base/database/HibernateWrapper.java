@@ -150,11 +150,11 @@ public class HibernateWrapper {
 		setQueryParams(q, params);
 		return q;
 	}
-	public Query<?> nativeQuery(Class<?> clazz, String nativeQuery){
+	public <T> Query<T> nativeQuery(Class<T> clazz, String nativeQuery){
 		return session().createNativeQuery(nativeQuery, clazz);
 	}
-	public Query<?> nativeQuery(Class<?> clazz, String nativeQuery, Map<Object, Object> params){
-		NativeQuery<?> q = session().createNativeQuery(nativeQuery, clazz);
+	public <T> Query<T> nativeQuery(Class<T> clazz, String nativeQuery, Map<Object, Object> params){
+		NativeQuery<T> q = session().createNativeQuery(nativeQuery, clazz);
 		setQueryParams(q, params);
 		return q;
 	}

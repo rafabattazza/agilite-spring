@@ -60,11 +60,10 @@ public class RestResponseEntityExceptionHandler extends ResponseEntityExceptionH
 	}
 
 	@ExceptionHandler(ConstraintViolationException.class)
-	@ResponseStatus(HttpStatus.BAD_REQUEST)
 	@ResponseBody
 	protected ResponseEntity<Object> onConstraintValidationException(ConstraintViolationException e, WebRequest request) {
 		List<Violation> violations = e.getConstraintViolations().stream().map(v -> new Violation(v.getPropertyPath().toString(), v.getMessage())).collect(Collectors.toList());
-		return ResponseEntity.badRequest().body(createMessageError(e, request, violations)); 
+		return ResponseEntity.status(HttpStatus.PRECONDITION_REQUIRED).body(createMessageError(e, request, violations)); 
 	}
 
 	@Override
