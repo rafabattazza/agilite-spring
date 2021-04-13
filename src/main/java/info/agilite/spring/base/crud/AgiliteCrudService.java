@@ -27,6 +27,7 @@ public class AgiliteCrudService {
 	
 	public CrudListResponse list(String classe, CrudListRequest crudRequest) {
 		AgiliteCrudProvider crudProvider = getCrudProvider(classe);
+		
 		crudProvider.validarAcessoAoListar();
 		return crudProvider.listar(crudRequest);
 	}
@@ -47,7 +48,7 @@ public class AgiliteCrudService {
 	
 	public Object copiar(String entityName, Long idEntity, List<String> viewPropertiesToFetchJoin) {
 		AgiliteCrudProvider crudProvider = getCrudProvider(entityName);
-		crudProvider.validarAcessoAoListar();
+		crudProvider.validarAcessoAoSalvar();
 		
 		return crudProvider.copiar(idEntity, viewPropertiesToFetchJoin);
 	}
