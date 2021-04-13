@@ -13,6 +13,8 @@ public abstract class EntitiesMetadata {
 	protected abstract  Map<String, PropertyMetadata> getAttributesMetadata();
 	protected abstract  Map<String, List<OneToManyMetadata>> getOneToManys();
 	protected abstract  Map<String, String> getTables();
+	protected abstract  Map<String, String> getUks();
+	
 	public abstract String getTableToFiles();
 	public abstract Class<? extends AgiliteAbstractEntity> getEntityClass(String name);
 	
@@ -42,6 +44,10 @@ public abstract class EntitiesMetadata {
 	public List<OneToManyMetadata> getOneToManysByTable(String tableName){
 		tableName = tableName.toLowerCase();
 		return getOneToManys().get(tableName);
+	}
+	
+	public String getUkFields(String ukName){
+		return getUks().get(ukName.toLowerCase());
 	}
 }
 
