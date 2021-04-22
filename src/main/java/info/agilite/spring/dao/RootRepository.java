@@ -15,9 +15,9 @@ import lombok.AllArgsConstructor;
 import lombok.experimental.FieldDefaults;
 
 @FieldDefaults(level = AccessLevel.PRIVATE)
-@AllArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor(access = AccessLevel.PUBLIC)
 public class RootRepository {
-	protected final HibernateWrapper hibernate;
+	public final HibernateWrapper hibernate;
 
 	public <T extends AgiliteAbstractEntity> T load(Class<T> clazz, Long id) {
 		return hibernate.load(clazz, id);
@@ -113,19 +113,19 @@ public class RootRepository {
 		return hibernate.findAll(clazz, ids);
 	}
 
-	protected <T> List<T> findAll(Class<T> clazz, String orderBy) {
+	public <T> List<T> findAll(Class<T> clazz, String orderBy) {
 		return hibernate.findAll(clazz, orderBy);
 	}
 
-	protected <T> T findUniqueByQuery(Class<T> clazz, String query, Map<Object, Object> params) {
+	public <T> T findUniqueByQuery(Class<T> clazz, String query, Map<Object, Object> params) {
 		return hibernate.findUniqueByQuery(clazz, query, params);
 	}
 
-	protected <T> List<T> findListByQuery(Class<T> clazz, String query, Map<Object, Object> params) {
+	public <T> List<T> findListByQuery(Class<T> clazz, String query, Map<Object, Object> params) {
 		return hibernate.findListByQuery(clazz, query, params);
 	}
 
-	protected <T> List<T> findListByEquals(Class<T> clazz, Map<Object, Object> params) {
+	public <T> List<T> findListByEquals(Class<T> clazz, Map<Object, Object> params) {
 		return hibernate.findListByEquals(clazz, params);
 	}
 
@@ -133,55 +133,65 @@ public class RootRepository {
 		return hibernate.findListByEqualsOrderBy(clazz, orderBy, params);
 	}
 
-	protected <T> T findUniqueFieldByEquals(Class<T> returnType, Class<? extends AgiliteAbstractEntity> entityClass, String field, Map<Object, Object> paramsEquals) {
+	public <T> T findUniqueByEquals(Class<T> clazz, Map<Object, Object> params) {
+		return hibernate.findUniqueByEquals(clazz, params);
+	}
+	
+	public <T> T findUniqueFieldByEquals(Class<T> returnType, Class<? extends AgiliteAbstractEntity> entityClass, String field, Map<Object, Object> paramsEquals) {
 		return hibernate.findUniqueFieldByEquals(returnType, entityClass, field, paramsEquals);
 	}
 
-	protected Query<?> nativeQuery(String nativeQuery) {
+	public Query<?> nativeQuery(String nativeQuery) {
 		return hibernate.nativeQuery(nativeQuery);
 	}
 
-	protected Query<?> nativeQuery(String nativeQuery, Map<Object, Object> params) {
+	public Query<?> nativeQuery(String nativeQuery, Map<Object, Object> params) {
 		return hibernate.nativeQuery(nativeQuery, params);
 	}
 
-	protected <T> Query<T> nativeQuery(Class<T> clazz, String nativeQuery) {
+	public <T> Query<T> nativeQuery(Class<T> clazz, String nativeQuery) {
 		return hibernate.nativeQuery(clazz, nativeQuery);
 	}
 
-	protected <T> Query<T> nativeQuery(Class<T> clazz, String nativeQuery, Map<Object, Object> params) {
+	public <T> Query<T> nativeQuery(Class<T> clazz, String nativeQuery, Map<Object, Object> params) {
 		return hibernate.nativeQuery(clazz, nativeQuery, params);
 	}
 
-	protected Query<?> query(String query) {
+	public Query<?> query(String query) {
 		return hibernate.query(query);
 	}
 
-	protected Query<?> query(String query, Map<Object, Object> params) {
+	public Query<?> query(String query, Map<Object, Object> params) {
 		return hibernate.query(query, params);
 	}
 
-	protected <T> Query<T> query(String query, Class<T> clazz) {
+	public <T> Query<T> query(String query, Class<T> clazz) {
 		return hibernate.query(query, clazz);
 	}
 
-	protected <T> Query<T> query(String query, Class<T> clazz, Map<Object, Object> params) {
+	public <T> Query<T> query(String query, Class<T> clazz, Map<Object, Object> params) {
 		return hibernate.query(query, clazz, params);
 	}
 
-	protected <T> Query<T> createEqualsQuery(Class<T> clazz, Map<Object, Object> paramsEquals) {
+	public <T> Query<T> createEqualsQuery(Class<T> clazz, Map<Object, Object> paramsEquals) {
 		return hibernate.createEqualsQuery(clazz, paramsEquals);
 	}
 
-	protected <T> Query<T> createEqualsQueryOrderBy(Class<T> clazz, String orderBy, Map<Object, Object> paramsEquals) {
+	public <T> Query<T> createEqualsQueryOrderBy(Class<T> clazz, String orderBy, Map<Object, Object> paramsEquals) {
 		return hibernate.createEqualsQueryOrderBy(clazz, orderBy, paramsEquals);
 	}
 
-	protected Session session() {
+	public Session session() {
 		return hibernate.session();
 	}
 
-	protected void setQueryParams(Query<?> q, Map<Object, Object> parametros) {
+	public void setQueryParams(Query<?> q, Map<Object, Object> parametros) {
 		hibernate.setQueryParams(q, parametros);
 	}
+	
+	public void changeSchema(String schema) {
+		nativeQuery("SET search_path="+schema).executeUpdate();
+	}
+	
+	
 }
